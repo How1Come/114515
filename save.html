@@ -317,7 +317,7 @@
       ALL_KEYS.filter(r => selected.has(r.key))
               .forEach(r => payload[r.key] = r.value);
 
-      const res = await fetch("https://wm.howcome.dpdns.org/save/upload", {
+      const res = await fetch("https://tq.howcome.dpdns.org/save/upload", {
         method: "POST",
         headers: {
           "Authorization": getAuthHeader(),
@@ -339,7 +339,7 @@
 
   document.getElementById("btn-download-cloud").onclick = async () => {
     try {
-      const res = await fetch("https://wm.howcome.dpdns.org/save/download", {
+      const res = await fetch("https://tq.howcome.dpdns.org/save/download", {
         headers: { "Authorization": getAuthHeader() }
       });
 

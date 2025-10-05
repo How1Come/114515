@@ -14,9 +14,10 @@
 body,html{margin:0;padding:0;background:black;height:100%;overflow:hidden}
 canvas,body{-webkit-user-select:none;user-select:none;touch-action:manipulation}
 
-/* Transparent overlay that blocks the canvas only when open */
+/* Overlay that temporarily blocks background when menu is open */
 #cheatOverlay{
-  position:fixed;inset:0;
+  position:fixed;
+  inset:0;
   background:rgba(0,0,0,0.05);
   z-index:2147483645;
   display:none;
@@ -27,11 +28,13 @@ canvas,body{-webkit-user-select:none;user-select:none;touch-action:manipulation}
   pointer-events:auto;
 }
 
+/* Cheat side panel */
 #cheatPanel{
   position:fixed;
   top:0;right:-380px;width:380px;height:100%;
   background:rgba(17,17,17,.98);
-  color:#fff;overflow-y:auto;
+  color:#fff;
+  overflow-y:auto;
   z-index:2147483646;
   padding:12px;box-sizing:border-box;
   transition:right .28s ease;
@@ -54,7 +57,8 @@ canvas,body{-webkit-user-select:none;user-select:none;touch-action:manipulation}
 
 /* Floating open button */
 #cheatFab{
-  position:fixed;right:12px;top:50%;
+  position:fixed;
+  right:12px;top:50%;
   transform:translateY(-50%);
   width:44px;height:44px;line-height:44px;
   text-align:center;border-radius:22px;
@@ -126,23 +130,34 @@ canvas,body{-webkit-user-select:none;user-select:none;touch-action:manipulation}
   const closeBtn = document.getElementById('cheatClose');
   const content = document.getElementById('cheatContent');
 
+  let panelOpen = false;
+
   function openPanel(){
+    if(panelOpen) return;
+    panelOpen = true;
     panel.classList.add('open');
     overlay.classList.add('active');
+    overlay.style.pointerEvents = 'auto';
     fab.style.display='none';
+    panel.setAttribute('aria-hidden','false');
   }
+
   function closePanel(){
+    if(!panelOpen) return;
+    panelOpen = false;
     panel.classList.remove('open');
     overlay.classList.remove('active');
+    overlay.style.pointerEvents = 'none';
     fab.style.display='block';
+    panel.setAttribute('aria-hidden','true');
   }
 
-  // Ensure proper layering
+  // overlay click closes
   overlay.addEventListener('click', e=>{
-    if(!panel.contains(e.target)) closePanel();
+    if(panelOpen && !panel.contains(e.target)) closePanel();
   });
 
-  // Button touch/click (robust for mobile)
+  // unify tap/click behavior
   function bindTap(el, fn){
     el.addEventListener('click', e=>{e.preventDefault();fn();});
     el.addEventListener('touchstart', e=>{e.preventDefault();fn();},{passive:false});
@@ -171,6 +186,14 @@ canvas,body{-webkit-user-select:none;user-select:none;touch-action:manipulation}
       const ev=new KeyboardEvent('keydown',{key:'Escape',code:'Escape',bubbles:true,cancelable:true});
       document.dispatchEvent(ev);window.dispatchEvent(ev);
     }catch(e){}
+  });
+
+  // safety: if overlay blocks after close, reset pointer-events
+  document.addEventListener('pointerdown',()=>{
+    if(!panelOpen){
+      overlay.style.pointerEvents='none';
+      overlay.classList.remove('active');
+    }
   });
 
   window.showCheatTab=showCheatTab;

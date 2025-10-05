@@ -1,204 +1,180 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0">
-    <link rel="icon" href="icon/icon.png" type="image/png">
-    <link rel="apple-touch-icon" href="icon/icon.png">
-    <link rel="stylesheet" href="fonts/gamefont.css">
-    <title>魔法少女天穹法妮雅 v1.05</title>
+<head>
+<meta charset="UTF-8">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0">
+<link rel="icon" href="icon/icon.png" type="image/png">
+<link rel="apple-touch-icon" href="icon/icon.png">
+<link rel="stylesheet" href="fonts/gamefont.css">
+<title>魔法少女天穹法妮雅 v1.05</title>
+<style>
+body,html{margin:0;padding:0;background:black;height:100%;overflow:hidden}
+canvas,body{-webkit-user-select:none;user-select:none;touch-action:manipulation}
 
-    <style>
-      body, html { margin:0; padding:0; background:black; height:100%; overflow:hidden; }
-      canvas,body{ -webkit-user-select:none; user-select:none; touch-action:manipulation; }
+/* Transparent overlay that blocks the canvas only when open */
+#cheatOverlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.05);
+  z-index:2147483645;
+  display:none;
+  pointer-events:none;
+}
+#cheatOverlay.active{
+  display:block;
+  pointer-events:auto;
+}
 
-      /* Transparent overlay that catches all taps when menu open */
-      #cheatOverlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.05);
-        z-index: 2147483645;
-        display: none;
-      }
-      #cheatOverlay.active { display:block; }
+#cheatPanel{
+  position:fixed;
+  top:0;right:-380px;width:380px;height:100%;
+  background:rgba(17,17,17,.98);
+  color:#fff;overflow-y:auto;
+  z-index:2147483646;
+  padding:12px;box-sizing:border-box;
+  transition:right .28s ease;
+  font-family:Arial,sans-serif;font-size:14px;
+  border-left:1px solid rgba(255,255,255,.04);
+  pointer-events:auto;
+}
+#cheatPanel.open{right:0}
+#cheatPanel h2{margin:8px 0 10px;font-size:16px;border-bottom:1px solid #444;padding-bottom:6px}
+#cheatClose{background:#333;border:1px solid #555;color:#fff;border-radius:6px;padding:6px 10px;margin-bottom:8px;cursor:pointer;display:inline-block}
+#cheatTabs{margin-bottom:10px;display:flex;flex-wrap:wrap;gap:8px}
+#cheatTabs button{background:#2a2a2a;border:1px solid #555;color:#fff;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:13px}
+#cheatPanel label{display:inline-block;width:120px;vertical-align:middle}
+#cheatPanel input,#cheatPanel select{width:120px;margin-right:6px;padding:4px;box-sizing:border-box;vertical-align:middle}
+#cheatPanel .row{margin:8px 0;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.btn{background:#2c2c2c;border:1px solid #555;padding:6px 10px;border-radius:6px;color:#fff;cursor:pointer}
+.btn.small{padding:4px 8px;font-size:13px}
+.muted{color:#9aa;font-size:13px}
+.status{font-size:13px;margin-top:8px;color:#9df}
 
-      #cheatPanel {
-        position: fixed;
-        top: 0;
-        right: -380px;
-        width: 380px;
-        height: 100%;
-        background: rgba(17,17,17,.98);
-        color: #fff;
-        overflow-y: auto;
-        z-index: 2147483646;
-        padding: 12px;
-        box-sizing: border-box;
-        transition: right .28s ease;
-        font-family: Arial, sans-serif;
-        font-size: 14px;
-        border-left: 1px solid rgba(255,255,255,.04);
-      }
-      #cheatPanel.open { right: 0; }
-      #cheatPanel h2 { margin:8px 0 10px; font-size:16px; border-bottom:1px solid #444; padding-bottom:6px; }
-      #cheatTabs { margin-bottom:10px; display:flex; flex-wrap:wrap; gap:8px; }
-      #cheatTabs button { background:#2a2a2a;border:1px solid #555;color:#fff;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:13px }
-      #cheatClose{background:#333;border:1px solid #555;color:#fff;border-radius:6px;padding:6px 10px;margin-bottom:8px;cursor:pointer;display:inline-block;}
-      #cheatPanel label{display:inline-block;width:120px;vertical-align:middle;}
-      #cheatPanel input,#cheatPanel select{width:120px;margin-right:6px;padding:4px;box-sizing:border-box;vertical-align:middle;}
-      #cheatPanel .row{margin:8px 0;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-      .btn{background:#2c2c2c;border:1px solid #555;padding:6px 10px;border-radius:6px;color:#fff;cursor:pointer;}
-      .btn.small{padding:4px 8px;font-size:13px;}
-      .muted{color:#9aa;font-size:13px;}
-      .status{font-size:13px;margin-top:8px;color:#9df;}
+/* Floating open button */
+#cheatFab{
+  position:fixed;right:12px;top:50%;
+  transform:translateY(-50%);
+  width:44px;height:44px;line-height:44px;
+  text-align:center;border-radius:22px;
+  background:rgba(34,34,34,.95);
+  color:#fff;border:1px solid #555;
+  box-shadow:0 2px 10px rgba(0,0,0,.35);
+  z-index:2147483647;
+  cursor:pointer;
+  pointer-events:auto;
+}
 
-      #cheatFab {
-        position: fixed;
-        right: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 44px;
-        height: 44px;
-        line-height: 44px;
-        text-align: center;
-        border-radius: 22px;
-        background: rgba(34,34,34,.95);
-        color: #fff;
-        border: 1px solid #555;
-        box-shadow: 0 2px 10px rgba(0,0,0,.35);
-        z-index: 2147483647;
-        cursor: pointer;
-      }
+/* Virtual ESC button */
+#escButton{
+  position:fixed;left:12px;bottom:12px;
+  width:64px;height:64px;border-radius:50%;
+  background:rgba(68,68,68,0.95);
+  color:#fff;border:1px solid #555;
+  font-size:16px;font-weight:bold;
+  z-index:2147483647;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 10px rgba(0,0,0,.35);
+  cursor:pointer;
+  pointer-events:auto;
+}
+</style>
+</head>
+<body>
+<!-- Game scripts -->
+<script src="js/libs/pixi.js"></script>
+<script src="js/libs/pixi-tilemap.js"></script>
+<script src="js/libs/pixi-picture.js"></script>
+<script src="js/libs/fpsmeter.js"></script>
+<script src="js/libs/lz-string.js"></script>
+<script src="js/libs/iphone-inline-video.browser.js"></script>
+<script src="js/rpg_core.js"></script>
+<script src="js/rpg_managers.js"></script>
+<script src="js/rpg_objects.js"></script>
+<script src="js/rpg_scenes.js"></script>
+<script src="js/rpg_sprites.js"></script>
+<script src="js/rpg_windows.js"></script>
+<script src="js/plugins.js"></script>
+<script src="js/main.js"></script>
 
-      #escButton {
-        position: fixed;
-        left: 12px;
-        bottom: 12px;
-        width: 64px;
-        height: 64px;
-        border-radius: 50%;
-        background: rgba(68,68,68,0.95);
-        color: #fff;
-        border: 1px solid #555;
-        font-size: 16px;
-        font-weight: bold;
-        z-index: 2147483647;
-        display: flex;
-        align-items:center;
-        justify-content:center;
-        box-shadow: 0 2px 10px rgba(0,0,0,.35);
-        cursor:pointer;
-      }
-    </style>
-  </head>
+<!-- Cheat UI -->
+<div id="cheatFab" title="Open cheats">≡</div>
+<div id="cheatOverlay"></div>
 
-  <body>
-    <!-- Game scripts (unchanged) -->
-    <script src="js/libs/pixi.js"></script>
-    <script src="js/libs/pixi-tilemap.js"></script>
-    <script src="js/libs/pixi-picture.js"></script>
-    <script src="js/libs/fpsmeter.js"></script>
-    <script src="js/libs/lz-string.js"></script>
-    <script src="js/libs/iphone-inline-video.browser.js"></script>
-    <script src="js/rpg_core.js"></script>
-    <script src="js/rpg_managers.js"></script>
-    <script src="js/rpg_objects.js"></script>
-    <script src="js/rpg_scenes.js"></script>
-    <script src="js/rpg_sprites.js"></script>
-    <script src="js/rpg_windows.js"></script>
-    <script src="js/plugins.js"></script>
-    <script src="js/main.js"></script>
+<div id="cheatPanel" aria-hidden="true">
+  <button id="cheatClose" class="btn small">Close</button>
+  <h2>Cheat Menu</h2>
+  <div id="cheatTabs">
+    <button data-tab="money">Money</button>
+    <button data-tab="items">Items</button>
+    <button data-tab="actors">Actors</button>
+    <button data-tab="time">Time</button>
+    <button data-tab="vars">Vars</button>
+    <button data-tab="settings">Settings</button>
+  </div>
+  <div id="cheatContent" class="muted">Choose a tab…</div>
+</div>
 
-    <!-- Cheat UI -->
-    <div id="cheatFab" title="Open cheats">≡</div>
-    <div id="cheatOverlay"></div>
+<button id="escButton" title="ESC Menu">ESC</button>
 
-    <div id="cheatPanel" aria-hidden="true">
-      <button id="cheatClose" class="btn small">Close</button>
-      <h2>Cheat Menu</h2>
-      <div id="cheatTabs">
-        <button data-tab="money">Money</button>
-        <button data-tab="items">Items</button>
-        <button data-tab="actors">Actors</button>
-        <button data-tab="time">Time</button>
-        <button data-tab="vars">Vars</button>
-        <button data-tab="settings">Settings</button>
-      </div>
-      <div id="cheatContent" class="muted">Choose a tab…</div>
-    </div>
+<script>
+(function(){
+  const fab = document.getElementById('cheatFab');
+  const panel = document.getElementById('cheatPanel');
+  const overlay = document.getElementById('cheatOverlay');
+  const closeBtn = document.getElementById('cheatClose');
+  const content = document.getElementById('cheatContent');
 
-    <button id="escButton" title="ESC Menu">ESC</button>
+  function openPanel(){
+    panel.classList.add('open');
+    overlay.classList.add('active');
+    fab.style.display='none';
+  }
+  function closePanel(){
+    panel.classList.remove('open');
+    overlay.classList.remove('active');
+    fab.style.display='block';
+  }
 
-    <script>
-    (function(){
-      const fab = document.getElementById('cheatFab');
-      const panel = document.getElementById('cheatPanel');
-      const closeBtn = document.getElementById('cheatClose');
-      const overlay = document.getElementById('cheatOverlay');
-      const tabs = document.getElementById('cheatTabs');
-      const content = document.getElementById('cheatContent');
+  // Ensure proper layering
+  overlay.addEventListener('click', e=>{
+    if(!panel.contains(e.target)) closePanel();
+  });
 
-      function openPanel(){
-        panel.classList.add('open');
-        overlay.classList.add('active');
-        fab.style.display='none';
-      }
-      function closePanel(){
-        panel.classList.remove('open');
-        overlay.classList.remove('active');
-        fab.style.display='block';
-      }
+  // Button touch/click (robust for mobile)
+  function bindTap(el, fn){
+    el.addEventListener('click', e=>{e.preventDefault();fn();});
+    el.addEventListener('touchstart', e=>{e.preventDefault();fn();},{passive:false});
+  }
+  bindTap(fab, openPanel);
+  bindTap(closeBtn, closePanel);
 
-      // Ensure overlay routes events properly
-      overlay.addEventListener('click', e=>{
-        // if click outside the panel area -> close
-        if(!panel.contains(e.target)) closePanel();
-      });
+  document.getElementById('cheatTabs').addEventListener('click', e=>{
+    const b=e.target.closest('button[data-tab]');
+    if(b) showCheatTab(b.dataset.tab);
+  });
 
-      // click & touch listeners
-      [fab, closeBtn].forEach(el=>{
-        el.addEventListener('click', e=>{ e.preventDefault(); e.stopPropagation(); el===fab?openPanel():closePanel(); });
-        el.addEventListener('touchstart', e=>{ e.preventDefault(); e.stopPropagation(); el===fab?openPanel():closePanel(); }, {passive:false});
-      });
+  function showCheatTab(tab){
+    content.innerHTML='';
+    const div=document.createElement('div');
+    div.innerHTML=`<p>Tab: ${tab}</p><button class="btn small">Test ${tab}</button>`;
+    content.appendChild(div);
+    const btn=div.querySelector('button');
+    bindTap(btn, ()=>alert('Pressed '+tab));
+  }
 
-      tabs.addEventListener('click', e=>{
-        const b=e.target.closest('button[data-tab]');
-        if(b) showCheatTab(b.dataset.tab);
-      });
-      tabs.addEventListener('touchstart', e=>{
-        const b=e.target.closest('button[data-tab]');
-        if(b){ e.preventDefault(); showCheatTab(b.dataset.tab); }
-      },{passive:false});
+  // ESC button
+  const escBtn=document.getElementById('escButton');
+  bindTap(escBtn, ()=>{
+    try{
+      const ev=new KeyboardEvent('keydown',{key:'Escape',code:'Escape',bubbles:true,cancelable:true});
+      document.dispatchEvent(ev);window.dispatchEvent(ev);
+    }catch(e){}
+  });
 
-      function el(tag, html){const d=document.createElement(tag);if(html)d.innerHTML=html;return d;}
-      function escapeHtml(s){return s?String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])):'';}
-
-      // Basic example tabs to show working touch/click
-      function showCheatTab(tab){
-        content.innerHTML='';
-        if(tab==='money') content.innerHTML='<div class="row"><label>Money:</label><input type="number" id="moneyInput" value="0"><button class="btn small" id="setMoney">Set</button></div>';
-        else if(tab==='vars') content.innerHTML='<div class="row"><label>Var:</label><input type="number" id="varInput" value="0"><button class="btn small" id="setVar">Set</button></div>';
-        else content.textContent='This tab: '+tab;
-        // Example handler
-        const btn = content.querySelector('button');
-        if(btn){
-          btn.addEventListener('click',()=>alert('Clicked '+tab+' OK'));
-          btn.addEventListener('touchstart',e=>{e.preventDefault();alert('Touched '+tab+' OK');},{passive:false});
-        }
-      }
-
-      // ESC button
-      const escBtn=document.getElementById('escButton');
-      escBtn.addEventListener('click',()=>{try{
-        const ev=new KeyboardEvent('keydown',{key:'Escape',code:'Escape',bubbles:true,cancelable:true});
-        document.dispatchEvent(ev);window.dispatchEvent(ev);
-      }catch(e){}});
-      escBtn.addEventListener('touchstart',e=>{e.preventDefault();const ev=new KeyboardEvent('keydown',{key:'Escape',code:'Escape',bubbles:true,cancelable:true});document.dispatchEvent(ev);},{passive:false});
-
-      window.showCheatTab=showCheatTab;
-    })();
-    </script>
-  </body>
+  window.showCheatTab=showCheatTab;
+})();
+</script>
+</body>
 </html>

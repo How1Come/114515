@@ -1,402 +1,890 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>RPG Maker Save Export / Import (MV & MZ, HTML5 + .rpgsave)</title>
-  <style>
-    :root {
-      --bg: #0b0f14;
-      --panel: #111825;
-      --muted: #9fb0c0;
-      --text: #e6eef7;
-      --brand: #4cc3ff;
-      --brand-600:#2aa7f0;
-      --ok: #3ddc84;
-      --warn: #ffb454;
-      --bad: #ff6b6b;
-      --chip: #1a2433;
-      --chip-brd: #2a3a55;
-      --focus: 0 0 0 3px rgba(76,195,255,.25);
-    }
-    html,body{height:100%}
-    body{
-      margin:0; background: radial-gradient(1200px 800px at 80% -20%, rgba(76,195,255,.08), transparent 60%),
-                                radial-gradient(800px 600px at 10% 120%, rgba(61,220,132,.07), transparent 60%),
-                                var(--bg);
-      color:var(--text);
-      font: 16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Inter, Ubuntu, Cantarell, Noto Sans, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
-    }
-    .wrap{max-width:1024px;margin:40px auto;padding:0 16px}
-    header{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:20px}
-    .title{font-weight:800;font-size:clamp(22px,3vw,30px);letter-spacing:.2px}
-    .subtitle{color:var(--muted);font-size:14px}
-    .card{background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.0));border:1px solid #1a2536;border-radius:16px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.3);}
-    .grid{display:grid;grid-template-columns: 1fr; gap:16px}
-    @media(min-width:900px){.grid{grid-template-columns: 1fr 1fr}}
-    .btn{appearance:none;border:1px solid #27506b;background:linear-gradient(180deg,#153045,#0f2638);color:var(--text);padding:10px 14px;border-radius:12px;font-weight:700;cursor:pointer;transition:.15s;}
-    .btn:hover{border-color:#2f668a;transform:translateY(-1px)}
-    .btn:focus{outline:none;box-shadow:var(--focus)}
-    .btn.primary{background:linear-gradient(180deg, #0e6aa8, #0a5486);border-color:#0d5e96}
-    .btn.primary:hover{background:linear-gradient(180deg,#0f77bf,#0b5e9a)}
-    .btn.good{border-color:#2e6b52;background:linear-gradient(180deg,#144335,#0d2f25)}
-    .btn.bad{border-color:#6b2e2e;background:linear-gradient(180deg,#431414,#2f0d0d)}
-    .btn.link{background:transparent;border-color:transparent;padding:0;color:var(--brand)}
-    .klist{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px}
-    .chip{border:1px solid var(--chip-brd);background:linear-gradient(180deg,#0e1725,#0b1320);border-radius:999px;padding:6px 10px;font-size:12px;color:var(--muted)}
-    .chip strong{color:var(--text)}
-    .muted{color:var(--muted)}
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
-    input[type="file"]{display:none}
-    .filelabel{display:inline-flex;align-items:center;gap:10px}
-    .filedrop{border:1.5px dashed #284057;border-radius:14px;padding:18px;text-align:center;background:rgba(255,255,255,.02)}
-    .filedrop.drag{border-color:var(--brand)}
-    .help{font-size:13px;color:var(--muted)}
-    .row{display:flex;gap:10px;flex-wrap:wrap}
-    .spacer{flex:1}
-    .tbl{width:100%;border-collapse:separate;border-spacing:0 8px}
-    .tbl th{font-size:12px;color:var(--muted);font-weight:700;text-align:left;padding:0 10px}
-    .tbl td{background:linear-gradient(180deg,#0a1522,#08101b);border:1px solid #1a2536;border-left-width:1px;border-right-width:1px;padding:10px;border-radius:10px}
-    .tbl td:first-child{border-right:none}
-    .tbl td:last-child{border-left:none}
-    .badge{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:999px;font-size:12px;border:1px solid #25475c;background:#0d2132;color:var(--muted)}
-    .badge.ok{color:var(--ok);border-color:#1f5b45;background:#0f2b22}
-    .badge.warn{color:var(--warn);border-color:#54421f;background:#2a2314}
-    .badge.bad{color:var(--bad);border-color:#5b1f1f;background:#2b0f0f}
-    .sr{position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden}
-    .foot{margin-top:22px;font-size:12px;color:var(--muted)}
-    .codebox{white-space:pre-wrap;word-break:break-word;background:#0a1522;border:1px solid #1a2536;border-radius:10px;padding:10px;max-height:260px;overflow:auto}
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <header>
-      <div>
-        <div class="title">RPG Maker Save Export / Import</div>
-        <div class="subtitle">MV & MZ HTML5 saves (localStorage) + direct <span class="mono">.rpgsave</span> import/export. Everything happens locally in your browser.</div>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0">
+    <link rel="icon" href="icon/icon.png" type="image/png">
+    <link rel="apple-touch-icon" href="icon/icon.png">
+    <link rel="stylesheet" type="text/css" href="fonts/gamefont.css">
+    <title>魔法少女天穹法妮雅 v1.05 (with Cheat Menu)</title>
+
+    <style>
+      /* ===== Cheat sidebar ===== */
+      #cheatPanel {
+        position: fixed;
+        top: 0;
+        right: -380px;                /* hidden */
+        width: 380px;
+        height: 100%;
+        background: rgba(17,17,17,.98);
+        color: #fff;
+        overflow-y: auto;
+        z-index: 100002;
+        padding: 12px 12px 20px 12px;
+        box-sizing: border-box;
+        transition: right .28s ease;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        -webkit-overflow-scrolling: touch;
+        border-left: 1px solid rgba(255,255,255,.04);
+        touch-action: auto; /* allow pointer events delivery */
+        -webkit-user-select: none;
+      }
+      #cheatPanel.open { right: 0; }
+      #cheatPanel h2 {
+        margin: 8px 0 10px;
+        font-size: 16px;
+        border-bottom: 1px solid #444;
+        padding-bottom: 6px;
+      }
+      #cheatClose {
+        position: sticky;
+        top: 0;
+        display: inline-block;
+        background: #333;
+        border: 1px solid #555;
+        color: #fff;
+        border-radius: 6px;
+        padding: 6px 10px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        -webkit-user-select: none;
+      }
+      #cheatTabs { margin-bottom:10px; display:flex; flex-wrap:wrap; gap:8px; }
+      #cheatTabs button {
+        background: #2a2a2a;
+        border: 1px solid #555;
+        color: #fff;
+        border-radius: 6px;
+        padding: 6px 10px;
+        cursor: pointer;
+        font-size:13px;
+        -webkit-user-select: none;
+      }
+      #cheatPanel label { display:inline-block; width:120px; vertical-align:middle; }
+      #cheatPanel input[type="number"], #cheatPanel input[type="text"], #cheatPanel select { width:120px; margin-right:6px; padding:4px; box-sizing:border-box; vertical-align:middle; }
+      #cheatPanel .row { margin: 8px 0; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+      #cheatPanel hr { border: 0; border-top: 1px solid #333; margin: 8px 0; }
+      #cheatPanel .sub { color:#bbb; font-size:12px; margin-top:6px; }
+
+      /* Floating open button */
+      #cheatFab {
+        position: fixed;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 44px;
+        height: 44px;
+        line-height: 44px;
+        text-align: center;
+        border-radius: 22px;
+        background: rgba(34,34,34,.95);
+        color: #fff;
+        border: 1px solid #555;
+        box-shadow: 0 2px 10px rgba(0,0,0,.35);
+        z-index: 100003;
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+      }
+
+      /* Virtual ESC button (fixed at left corner) */
+      #escButton {
+        position: fixed;
+        left: 12px;
+        bottom: 12px;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: rgba(68,68,68,0.95);
+        color: #fff;
+        border: 1px solid #555;
+        font-size: 16px;
+        font-weight: bold;
+        z-index: 100003;
+        cursor: pointer;
+        user-select: none;
+        touch-action: manipulation;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,.35);
+        -webkit-user-select: none;
+      }
+
+      /* small helper */
+      .btn { background:#2c2c2c;border:1px solid #555;padding:6px 10px;border-radius:6px;color:#fff;cursor:pointer }
+      .btn.small { padding:4px 8px; font-size:13px }
+      .muted { color:#9aa; font-size:13px }
+      .status { font-size:13px; margin-top:8px; color:#9df; }
+      .danger { color:#f88; }
+      .ok { color:#8f8; }
+
+      /* ensure overlays only handle their pointer area */
+      #cheatPanel, #cheatFab, #escButton { pointer-events: auto; }
+      canvas, body { touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+    </style>
+  </head>
+
+  <body style="background-color: black">
+    <!-- RPG Maker MV core files (keep originals) -->
+    <script type="text/javascript" src="js/libs/pixi.js"></script>
+    <script type="text/javascript" src="js/libs/pixi-tilemap.js"></script>
+    <script type="text/javascript" src="js/libs/pixi-picture.js"></script>
+    <script type="text/javascript" src="js/libs/fpsmeter.js"></script>
+    <script type="text/javascript" src="js/libs/lz-string.js"></script>
+    <script type="text/javascript" src="js/libs/iphone-inline-video.browser.js"></script>
+    <script type="text/javascript" src="js/rpg_core.js"></script>
+    <script type="text/javascript" src="js/rpg_managers.js"></script>
+    <script type="text/javascript" src="js/rpg_objects.js"></script>
+    <script type="text/javascript" src="js/rpg_scenes.js"></script>
+    <script type="text/javascript" src="js/rpg_sprites.js"></script>
+    <script type="text/javascript" src="js/rpg_windows.js"></script>
+    <script type="text/javascript" src="js/plugins.js"></script>
+    <script type="text/javascript" src="js/main.js"></script>
+
+    <!-- Floating open button -->
+    <div id="cheatFab" title="Open cheats" role="button" tabindex="0">≡</div>
+
+    <!-- Cheat panel -->
+    <div id="cheatPanel" aria-hidden="true">
+      <button id="cheatClose" class="btn small" type="button">Close</button>
+      <h2>Cheat Menu</h2>
+      <div id="cheatTabs" aria-hidden="false">
+        <button type="button" data-tab="money">Money</button>
+        <button type="button" data-tab="items">Items</button>
+        <button type="button" data-tab="actors">Actors</button>
+        <button type="button" data-tab="time">Time</button>
+        <button type="button" data-tab="vars">Vars</button>
+        <button type="button" data-tab="settings">Settings</button>
       </div>
-      <div class="row">
-        <button id="btn-scan" class="btn" title="Rescan localStorage">Rescan</button>
-        <button id="btn-export" class="btn primary" title="Export detected save keys">Prepare Export</button>
-      </div>
-    </header>
-    <div class="grid">
-      <!-- LEFT: Detected keys & actions -->
-      <section class="card">
-        <h2 style="margin:0 0 6px 0">Detected Save Keys</h2>
-        <div class="help">Keys in <span class="mono">localStorage</span> that look like RPG Maker data. Select what you want to export.</div>
 
-        <div id="keyChips" class="klist"></div>
-
-        <table class="tbl" aria-label="Detected keys table">
-          <thead>
-            <tr>
-              <th>Key</th>
-              <th>Size</th>
-              <th>Type</th>
-              <th>Include</th>
-            </tr>
-          </thead>
-          <tbody id="keyTable"></tbody>
-        </table>
-
-        <div class="row" style="margin-top:8px">
-          <button id="btn-toggle-all" class="btn">Toggle All</button>
-          <button id="btn-delete-selected" class="btn bad" title="Delete selected keys from localStorage">Delete Selected</button>
-          <div class="spacer"></div>
-          <span id="scanBadge" class="badge">Idle</span>
-        </div>
-      </section>
-
-      <!-- RIGHT: Import / Restore -->
-      <section class="card">
-        <h2 style="margin:0 0 6px 0">Import / Restore</h2>
-        <div id="drop" class="filedrop" tabindex="0" role="button" aria-label="Drop a backup or .rpgsave file here or browse">
-          <div style="margin-bottom:10px">Drop a backup <em>or</em> <span class="mono">.rpgsave</span> here</div>
-          <label class="filelabel btn" for="file">
-            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 16V7.83l2.59 2.58L16 9l-4-4l-4 4l1.41 1.41L11 7.83V16h1z"/></svg>
-            Browse file
-          </label>
-          <input id="file" type="file" accept="application/json,text/plain,.rpgsave" />
-          <div class="help">Backups made here use JSON. You can also import/export native <span class="mono">.rpgsave</span> files.</div>
-        </div>
-        <div class="row" style="margin-top:10px">
-          <button id="btn-apply" class="btn good" disabled>Write To localStorage</button>
-          <button id="btn-clear-preview" class="btn" disabled>Clear Preview</button>
-          <div class="spacer"></div>
-          <span id="importBadge" class="badge">No file</span>
-        </div>
-
-        <h3 style="margin:14px 0 8px">Or paste backup text</h3>
-        <textarea id="paste" class="codebox" rows="8" placeholder='Paste backup JSON (or raw Base64/text) here…'></textarea>
-        <div class="row" style="margin-top:8px">
-          <button id="btn-parse-paste" class="btn">Preview From Text</button>
-        </div>
-
-        <div id="preview" style="display:none;margin-top:14px">
-          <div class="help">Preview of keys that will be written. Existing keys will be overwritten.</div>
-          <div id="previewList" class="klist"></div>
-        </div>
-      </section>
+      <div id="cheatContent" class="muted">Choose a tab…</div>
     </div>
 
-    <!-- EXPORT AREA -->
-    <section class="card" style="margin-top:16px">
-      <h2 style="margin:0 0 6px 0">Create Backup</h2>
-      <div class="help">Export selected keys to JSON or download native <span class="mono">.rpgsave</span> file(s).</div>
-      <div class="row" style="margin-top:6px">
-        <button id="btn-download" class="btn primary" disabled>Download JSON</button>
-        <button id="btn-copy" class="btn" disabled>Copy As Text</button>
-        <button id="btn-download-rpgsave" class="btn" disabled>Download .rpgsave</button>
-        <div class="spacer"></div>
-        <span id="exportBadge" class="badge">Nothing selected</span>
-      </div>
-    </section>
+    <!-- Virtual ESC (opens menu reliably on mobile) -->
+    <button id="escButton" type="button" title="Open menu (ESC)">ESC</button>
 
-    <p class="foot">Tip: Run this on the same site/origin where the game runs so the save keys appear. All operations happen locally in your browser.</p>
+    <script>
+    (function(){
+      /* =========================
+         Utility helpers
+         ========================= */
+      function el(tag, html) { const d = document.createElement(tag); if (html !== undefined) d.innerHTML = html; return d; }
+      function escapeHtml(s) { if (!s && s !== 0) return ''; return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+      function isFunction(v){ return typeof v === 'function'; }
 
-      <!-- CLOUD SYNC -->
-    <section class="card" style="margin-top:16px">
-      <h2>Cloud Sync</h2>
-      <div class="help">Save to your Cloudflare Worker, restore on another device.</div>
-      <div class="row" style="margin-top:6px">
-        <input type="text" id="cloudUser" placeholder="Username" />
-        <input type="password" id="cloudPass" placeholder="Password" />
-      </div>
-      <div class="row" style="margin-top:8px">
-        <button id="btn-upload-cloud" class="btn primary">Upload to Cloud</button>
-        <button id="btn-download-cloud" class="btn">Download from Cloud</button>
-        <div class="spacer"></div>
-        <span id="cloudBadge" class="badge">Idle</span>
-      </div>
-    </section>
+      /* =========================
+         Elements and basic UI
+         ========================= */
+      const fab = document.getElementById('cheatFab');
+      const panel = document.getElementById('cheatPanel');
+      const closeBtn = document.getElementById('cheatClose');
+      const content = document.getElementById('cheatContent');
+      const tabsRoot = document.getElementById('cheatTabs');
+      const escBtn = document.getElementById('escButton');
 
-
-  <!-- EMBEDDED LZString LIBRARY -->
-  <script>
-  /* LZ-String (embedded, MIT License)
-     https://github.com/pieroxy/lz-string */
-  var LZString=function(){function o(o,r){if(!t[o]){t[o]={};for(var n=0;n<o.length;n++)t[o][o.charAt(n)]=n}return t[o][r]}var r=String.fromCharCode,n="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",e="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-$",t={},i={compressToBase64:function(o){if(null==o)return"";var r=i._compress(o,6,function(o){return n.charAt(o)});switch(r.length%4){default:case 0:return r;case 1:return r+"===";case 2:return r+"==";case 3:return r+"="}},decompressFromBase64:function(r){return null==r?"":""==r?null:i._decompress(r.length,32,function(e){return o(n,r.charAt(e))})},compressToUTF16:function(o){return null==o?"":i._compress(o,15,function(o){return r(o+32)})+" "},decompressFromUTF16:function(o){return null==o?"":""==o?null:i._decompress(o.length,16384,function(r){return o.charCodeAt(r)-32})},compressToUint8Array:function(o){for(var r=i.compress(o),n=new Uint8Array(2*r.length),e=0,t=r.length;t>e;e++){var s=r.charCodeAt(e);n[2*e]=s>>>8,n[2*e+1]=s%256}return n},decompressFromUint8Array:function(o){if(null===o||void 0===o)return i.decompress(o);for(var n=new Array(o.length/2),e=0,t=n.length;t>e;e++)n[e]=256*o[2*e]+o[2*e+1];var s=[];return n.forEach(function(o){s.push(r(o))}),i.decompress(s.join(""))},compressToEncodedURIComponent:function(o){return null==o?"":i._compress(o,6,function(o){return e.charAt(o)})},decompressFromEncodedURIComponent:function(r){return null==r?"":""==r?null:(r=r.replace(/ /g,"+"),i._decompress(r.length,32,function(n){return o(e,r.charAt(n))}))},compress:function(o){return i._compress(o,16,function(o){return r(o)})},_compress:function(o,r,n){if(null==o)return"";var e,t,i={},s={},p="",u="",c="",a=2,f=3,l=2,h=[],d=0,v=0;for(t=0;t<o.length;t+=1)if(p=o.charAt(t),Object.prototype.hasOwnProperty.call(i,p)||(i[p]=f++,s[p]=!0),u=c+p,Object.prototype.hasOwnProperty.call(i,u))c=u;else{if(Object.prototype.hasOwnProperty.call(s,c)){if(c.charCodeAt(0)<256){for(e=0;e<l;e++)d<<=1,v==r-1?(v=0,h.push(n(d)),d=0):v++;for(t=0;t<8;t++)d=d<<1|c.charCodeAt(0)&1,v==r-1?(v=0,h.push(n(d)),d=0):v++,c=c.charCodeAt(0)>>1}else{for(e=0;e<l;e++)d=d<<1|1,v==r-1?(v=0,h.push(n(d)),d=0):v++;for(t=0;t<16;t++)d=d<<1|c.charCodeAt(0)&1,v==r-1?(v=0,h.push(n(d)),d=0):v++,c=c.charCodeAt(0)>>1}f<=a?a++:0,s[c]=!1}else for(t=0;t<l;t++)d=d<<1|i[c]&1,v==r-1?(v=0,h.push(n(d)),d=0):v++,i[c]=i[c]>>1;--a,0==a&&(a=Math.pow(2,l),l++),i[u]=f++,c=String(p)}if(""!==c){if(Object.prototype.hasOwnProperty.call(s,c)){if(c.charCodeAt(0)<256){for(e=0;e<l;e++)d<<=1,v==r-1?(v=0,h.push(n(d)),d=0):v++;for(t=0;t<8;t++)d=d<<1|c.charCodeAt(0)&1,v==r-1?(v=0,h.push(n(d)),d=0):v++,c=c.charCodeAt(0)>>1}else{for(e=0;e<l;e++)d=d<<1|1,v==r-1?(v=0,h.push(n(d)),d=0):v++;for(t=0;t<16;t++)d=d<<1|c.charCodeAt(0)&1,v==r-1?(v=0,h.push(n(d)),d=0):v++,c=c.charCodeAt(0)>>1}f<=a?a++:0,s[c]=!1}else for(t=0;t<l;t++)d=d<<1|i[c]&1,v==r-1?(v=0,h.push(n(d)),d=0):v++,i[c]=i[c]>>1}for(;;){if(d<<=1,v==r-1){h.push(n(d));break}v++}return h.join("")},decompress:function(o){return null==o?"":""==o?null:i._decompress(o.length,32768,function(r){return o.charCodeAt(r)})},_decompress:function(o,n,e){var t,i,s,p,u,c,a,f,l=[],h=4,d=4,v=3,g="",y=[],m={val:e(0),position:n,index:1};for(i=0;3>i;i+=1)l[i]=i;for(p=0,u=Math.pow(2,2),c=1;c!=u;)a=m.val&m.position,m.position>>=1,0==m.position&&(m.position=n,m.val=e(m.index++)),p|=(a>0?1:0)*c,c<<=1;switch(t=p){case 0:for(p=0,u=Math.pow(2,8),c=1;c!=u;)a=m.val&m.position,m.position>>=1,0==m.position&&(m.position=n,m.val=e(m.index++)),p|=(a>0?1:0)*c,c<<=1;l[3]=r(p),t=3;break;case 1:for(p=0,u=Math.pow(2,16),c=1;c!=u;)a=m.val&m.position,m.position>>=1,0==m.position&&(m.position=n,m.val=e(m.index++)),p|=(a>0?1:0)*c,c<<=1;l[3]=r(p),t=3;break;case 2:return""}for(f=g=l[t],y.push(l[t]);;){if(m.index>o)return"";for(p=0,u=Math.pow(2,v),c=1;c!=u;)a=m.val&m.position,m.position>>=1,0==m.position&&(m.position=n,m.val=e(m.index++)),p|=(a>0?1:0)*c,c<<=1;switch(s=p){case 0:for(p=0,u=Math.pow(2,8),c=1;c!=u;)a=m.val&m.position,m.position>>=1,0==m.position&&(m.position=n,m.val=e(m.index++)),p|=(a>0?1:0)*c,c<<=1;l[d++]=r(p),s=d-1,h--;break;case 1:for(p=0,u=Math.pow(2,16),c=1;c!=u;)a=m.val&m.position,m.position>>=1,0==m.position&&(m.position=n,m.val=e(m.index++)),p|=(a>0?1:0)*c,c<<=1;l[d++]=r(p),s=d-1,h--;break;case 2:return y.join("")}if(0==h&&(h=Math.pow(2,v),v++),l[s])f=l[s];else{if(s!==d)return null;f=g+g.charAt(0)}y.push(f),l[d++]=g+f.charAt(0),h--,g=f,0==h&&(h=Math.pow(2,v),v++)}}};return i}();
-  </script>
-  <script>
-  // ==== Utility functions ====
-  const $ = sel => document.querySelector(sel);
-  function bytes(n){return n<1024?n+" B":(n/1024).toFixed(1)+" KB";}
-  function badge(el,text,type){el.textContent=text;el.className="badge"+(type?" "+type:"");}
-  function isProbablyBase64(str){try{atob(str.slice(0,20));return true;}catch(e){return false;}}
-  function downloadBlob(blob,filename){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;a.click();}
-  function keyToSlot(key){let m=key.match(/RPG\s*File(\d+)/i);if(m)return parseInt(m[1]);return null;}
-  function filenameForKey(key){let s=keyToSlot(key);if(s)return `file${s}.rpgsave`;if(/global/i.test(key))return "global.rpgsave";return key.replace(/\W+/g,'_')+".rpgsave";}
-
-  // ==== State ====
-  let ALL_KEYS=[], selected=new Set(), previewData=null;
-
-  // ==== Rendering ====
-  function renderKeys(){
-    const tb=$("#keyTable"); tb.innerHTML="";
-    const chips=$("#keyChips"); chips.innerHTML="";
-    ALL_KEYS.forEach(r=>{
-      let tr=document.createElement("tr");
-      tr.innerHTML=`<td>${r.key}</td><td>${bytes(r.size)}</td><td>${r.type}</td>`;
-      let td=document.createElement("td");
-      let cb=document.createElement("input");
-      cb.type="checkbox"; cb.checked=/RPG/i.test(r.key);
-      if(cb.checked)selected.add(r.key);
-      cb.onchange=()=>{if(cb.checked)selected.add(r.key);else selected.delete(r.key);updateButtons();};
-      td.appendChild(cb); tr.appendChild(td); tb.appendChild(tr);
-
-      let chip=document.createElement("div");
-      chip.className="chip"; chip.innerHTML=`<strong>${r.key}</strong> • ${bytes(r.size)}`;
-      chips.appendChild(chip);
-    });
-    updateButtons();
-  }
-  function updateButtons(){
-    let c=selected.size;
-    $("#btn-download").disabled=!c;
-    $("#btn-copy").disabled=!c;
-    $("#btn-download-rpgsave").disabled=!c;
-    badge($("#exportBadge"),c?c+" selected":"Nothing selected",c?"ok":"bad");
-  }
-
-  // ==== Scan ====
-  function rescan(){
-    ALL_KEYS=[];
-    for(let i=0;i<localStorage.length;i++){
-      let k=localStorage.key(i),v=localStorage.getItem(k);
-      ALL_KEYS.push({key:k,value:v,size:v.length,type:isProbablyBase64(v)?"Base64":"Text"});
-    }
-    selected.clear(); renderKeys();
-    badge($("#scanBadge"),ALL_KEYS.length+" keys","ok");
-  }
-
-  // ==== Export ====
-  function exportJson(){
-    let obj={}; ALL_KEYS.filter(r=>selected.has(r.key)).forEach(r=>obj[r.key]=r.value);
-    downloadBlob(new Blob([JSON.stringify(obj)],{type:"application/json"}),"saves.json");
-  }
-  function copyJson(){
-    let obj={}; ALL_KEYS.filter(r=>selected.has(r.key)).forEach(r=>obj[r.key]=r.value);
-    navigator.clipboard.writeText(JSON.stringify(obj));
-  }
-  function exportRpgsave(){
-    const rows = ALL_KEYS.filter(r => selected.has(r.key));
-    if (!rows.length) return;
-    rows.forEach(r => {
-      let raw = r.value;
-      let out;
-      if (isProbablyBase64(raw)) {
-        // already compressed save (as in EXE)
-        out = raw;
-      } else {
-        // looks like JSON, compress it
-        out = LZString.compressToBase64(raw);
+      function openPanel(){
+        panel.classList.add('open');
+        panel.setAttribute('aria-hidden','false');
+        fab.style.display = 'none';
+        // prevent page scroll while open on mobile
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
+        // render current tab or default
+        const cur = panel.dataset.tab || 'money';
+        showCheatTab(cur);
       }
-      const blob = new Blob([out], {type:"application/octet-stream"});
-      downloadBlob(blob, filenameForKey(r.key));
-    });
-    badge($("#exportBadge"), "Exported .rpgsave", "ok");
-  }
-
-
-  // ==== Import / Preview ====
-  function previewFromObject(obj){
-    previewData=obj;
-    const pl=$("#previewList"); pl.innerHTML="";
-    for(const k in obj){
-      let chip=document.createElement("div"); chip.className="chip";
-      chip.innerHTML=`<strong>${k}</strong> • ${bytes(obj[k].length)}`;
-      pl.appendChild(chip);
-    }
-    $("#preview").style.display="block";
-    $("#btn-apply").disabled=false;
-    $("#btn-clear-preview").disabled=false;
-    badge($("#importBadge"),Object.keys(obj).length+" ready","ok");
-  }
-  function applyPreview(){
-    if(!previewData)return;
-    for(const k in previewData)localStorage.setItem(k,previewData[k]);
-    rescan(); clearPreview();
-    badge($("#importBadge"),"Applied","ok");
-  }
-  function clearPreview(){
-    previewData=null;
-    $("#preview").style.display="none";
-    $("#btn-apply").disabled=true;
-    $("#btn-clear-preview").disabled=true;
-    badge($("#importBadge"),"No file","bad");
-  }
-
-  // ==== File input ====
-  $("#file").onchange=e=>{
-    const f=e.target.files[0]; if(!f)return;
-    const reader=new FileReader();
-    reader.onload=ev=>{
-      let txt=ev.target.result;
-      if(f.name.endsWith(".rpgsave")){
-        // .rpgsave is Base64 compressed
-        previewFromObject({[f.name.replace(/\.rpgsave$/,"")]:txt});
-      }else{
-        try{previewFromObject(JSON.parse(txt));}
-        catch{alert("Invalid JSON");}
-      }
-    };
-    reader.readAsText(f);
-  };
-
-    // ==== Cloud Sync ====
-  function getAuthHeader() {
-    const u = document.getElementById("cloudUser").value.trim();
-    const p = document.getElementById("cloudPass").value.trim();
-    return "Basic " + btoa(u + ":" + p);
-  }
-
-  document.getElementById("btn-upload-cloud").onclick = async () => {
-    try {
-      const payload = {};
-      ALL_KEYS.filter(r => selected.has(r.key))
-              .forEach(r => payload[r.key] = r.value);
-
-      const res = await fetch("https://tq.howcome.dpdns.org/save/upload", {
-        method: "POST",
-        headers: {
-          "Authorization": getAuthHeader(),
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (res.ok) {
-        badge(document.getElementById("cloudBadge"), "Uploaded", "ok");
-      } else {
-        badge(document.getElementById("cloudBadge"), "Upload failed", "bad");
-      }
-    } catch (e) {
-      console.error(e);
-      badge(document.getElementById("cloudBadge"), "Error", "bad");
-    }
-  };
-
-  document.getElementById("btn-download-cloud").onclick = async () => {
-    try {
-      const res = await fetch("https://tq.howcome.dpdns.org/save/download", {
-        headers: { "Authorization": getAuthHeader() }
-      });
-
-      if (!res.ok) {
-        badge(document.getElementById("cloudBadge"), "No save", "bad");
-        return;
+      function closePanel(){
+        panel.classList.remove('open');
+        panel.setAttribute('aria-hidden','true');
+        fab.style.display = 'block';
+        document.documentElement.style.overflow = '';
+        document.body.style.overflow = '';
       }
 
-      const obj = await res.json();
-      for (const k in obj) {
-        localStorage.setItem(k, obj[k]);
+      // Pointer-friendly binding (works with mouse, touch, pen, etc.)
+      function bindPointerOnce(elem, type, handler){
+        if(!elem) return;
+        elem.addEventListener(type, handler, {passive:false});
       }
-      rescan();
-      badge(document.getElementById("cloudBadge"), "Restored", "ok");
-    } catch (e) {
-      console.error(e);
-      badge(document.getElementById("cloudBadge"), "Error", "bad");
-    }
-  };
 
+      // open/close wiring: prefer pointerdown/pointerup; also add click fallback
+      bindPointerOnce(fab, 'pointerup', (e)=>{ e.preventDefault(); openPanel(); });
+      fab.addEventListener('click', openPanel);
+      // touch fallback attribute for some iOS quirks
+      fab.setAttribute('ontouchstart', 'void(0)');
 
-  // ==== Drag-drop ====
-  const drop=$("#drop");
-  drop.ondragover=e=>{e.preventDefault();drop.classList.add("drag");};
-  drop.ondragleave=()=>drop.classList.remove("drag");
-  drop.ondrop=e=>{
-    e.preventDefault();drop.classList.remove("drag");
-    const f=e.dataTransfer.files[0]; if(f)$("#file").files=e.dataTransfer.files,$("#file").onchange({target:{files:[f]}});
-  };
+      bindPointerOnce(closeBtn, 'pointerup', (e)=>{ e.preventDefault(); closePanel(); });
+      closeBtn.addEventListener('click', closePanel);
+      closeBtn.setAttribute('ontouchstart', 'void(0)');
 
-  // ==== Paste box ====
-  $("#btn-parse-paste").onclick=()=>{
-    let txt=$("#paste").value.trim();
-    if(!txt)return;
-    try{previewFromObject(JSON.parse(txt));}
-    catch{previewFromObject({"pasted":txt});}
-  };
+      // delegates for tab buttons
+      tabsRoot.addEventListener('pointerup', (ev)=>{
+        const b = ev.target.closest('button[data-tab]');
+        if(!b) return;
+        ev.preventDefault();
+        const tab = b.dataset.tab;
+        showCheatTab(tab);
+        panel.dataset.tab = tab;
+      }, {passive:false});
+      tabsRoot.addEventListener('click', (ev)=>{ /* click fallback handled above */ });
 
-  // ==== Button hookups ====
-  $("#btn-scan").onclick=rescan;
-  $("#btn-download").onclick=exportJson;
-  $("#btn-copy").onclick=copyJson;
-  $("#btn-download-rpgsave").onclick=exportRpgsave;
-  $("#btn-apply").onclick=applyPreview;
-  $("#btn-clear-preview").onclick=clearPreview;
-  $("#btn-toggle-all").onclick=()=>{
-    if(selected.size<ALL_KEYS.length)ALL_KEYS.forEach(r=>selected.add(r.key));
-    else selected.clear(); renderKeys();
-  };
-  $("#btn-delete-selected").onclick=()=>{
-    if(confirm("Delete selected keys from localStorage?")){
-      ALL_KEYS.filter(r=>selected.has(r.key)).forEach(r=>localStorage.removeItem(r.key));
-      rescan();
-    }
-  };
+      /* =========================
+         Autosave state (OFF default)
+         ========================= */
+      let autosaveTimer = null;
+      let autosaveEnabled = false;
+      let autosaveIntervalMs = 5 * 60 * 1000; // default when enabled
+      let autosaveSlot = 1;
 
-  rescan(); // initial
-  </script>
-</body>
+      function enableAutosave(enabled){
+        autosaveEnabled = !!enabled;
+        if(autosaveTimer){ clearInterval(autosaveTimer); autosaveTimer = null; }
+        if(autosaveEnabled){
+          autosaveTimer = setInterval(()=> {
+            try { doSave(autosaveSlot, true); } catch(e) { console.warn('Auto-save failed', e); }
+          }, autosaveIntervalMs);
+        }
+        renderSettingsStatus();
+      }
+      function renderSettingsStatus(){
+        const s = document.getElementById('settingsStatus');
+        if(!s) return;
+        s.textContent = autosaveEnabled ? `Auto-save: every ${autosaveIntervalMs/60000} min (slot ${autosaveSlot})` : `Auto-save: OFF`;
+      }
+
+      /* =========================
+         Save / Load helpers
+         ========================= */
+      async function doSave(slot, silent){
+        if(!window.DataManager || typeof DataManager.saveGame !== 'function'){
+          alert('Save function not available in this environment.');
+          return;
+        }
+        slot = Number(slot) || 1;
+        try {
+          const ok = await DataManager.saveGame(slot);
+          if(!silent) alert(ok ? `Saved slot ${slot}` : `Save failed`);
+        } catch(e){
+          console.error('Save error', e);
+          alert('Save failed: '+(e && e.message ? e.message : e));
+        }
+      }
+
+      async function doLoad(slot){
+        if(!window.DataManager || typeof DataManager.loadGame !== 'function'){
+          alert('Load function not available in this environment.');
+          return;
+        }
+        slot = Number(slot) || 1;
+        try {
+          const ok = await DataManager.loadGame(slot);
+          if(ok) {
+            // try to refresh in-game without full reload when possible
+            if(window.SceneManager && isFunction(SceneManager.reload)) {
+              SceneManager.reload();
+            } else {
+              location.reload();
+            }
+          } else {
+            alert('Load failed (no saved data).');
+          }
+        } catch(e) {
+          console.error('Load error', e);
+          alert('Load failed: '+(e && e.message ? e.message : e));
+        }
+      }
+
+      // Expose for console
+      window.__doSave = doSave;
+      window.__doLoad = doLoad;
+
+      /* =========================
+         Tab system
+         ========================= */
+      window.showCheatTab = function(tab){
+        panel.dataset.tab = tab;
+        content.innerHTML = '';
+        try {
+          if(tab === 'money') return renderMoneyTab(content);
+          if(tab === 'items') return renderItemsTab(content);
+          if(tab === 'actors') return renderActorsTab(content);
+          if(tab === 'time') return renderTimeTab(content);
+          if(tab === 'vars') return renderVarsTab(content);
+          if(tab === 'settings') return renderSettingsTab(content);
+        } catch (e) {
+          content.textContent = 'Error rendering tab: ' + (e.message || e);
+          console.error(e);
+        }
+      };
+
+      /* =========================
+         Money Tab
+         ========================= */
+      function renderMoneyTab(container){
+        const wrap = el('div');
+        if(!window.$gameParty){
+          wrap.textContent = 'Game not loaded yet.';
+          container.appendChild(wrap);
+          return;
+        }
+        const gold = (typeof $gameParty.gold === 'function') ? $gameParty.gold() : ($gameParty._gold || 0);
+        const row = el('div');
+        row.className = 'row';
+        row.innerHTML =
+          `<label>Money</label>
+           <input type="number" id="cheat-money" value="${gold}" min="0">
+           <button class="btn small" id="btn-set-money">Set</button>
+           <button class="btn small" id="btn-add-money">+1000</button>`;
+        wrap.appendChild(row);
+        container.appendChild(wrap);
+
+        // pointer-friendly bindings
+        const setBtn = row.querySelector('#btn-set-money');
+        bindPointerOnce(setBtn, 'pointerup', (e)=>{ e.preventDefault(); setMoneyFromUI(); });
+        setBtn.addEventListener('click', setMoneyFromUI);
+
+        const addBtn = row.querySelector('#btn-add-money');
+        bindPointerOnce(addBtn, 'pointerup', (e)=>{ e.preventDefault(); addMoney(); });
+        addBtn.addEventListener('click', addMoney);
+
+        function setMoneyFromUI(){
+          const v = parseInt(document.getElementById('cheat-money').value, 10);
+          if(!isNaN(v) && window.$gameParty) {
+            if(typeof $gameParty._gold !== 'undefined') $gameParty._gold = v;
+            if(typeof $gameParty.gainGold === 'function') {
+              const cur = (typeof $gameParty.gold === 'function') ? $gameParty.gold() : ($gameParty._gold || 0);
+              $gameParty.gainGold(v - cur);
+            }
+            alert('Money set to '+v);
+          }
+        }
+        function addMoney(){
+          if(!window.$gameParty) return;
+          if(typeof $gameParty.gainGold === 'function') $gameParty.gainGold(1000);
+          else if(typeof $gameParty._gold !== 'undefined') $gameParty._gold = ($gameParty._gold || 0) + 1000;
+          const newv = (typeof $gameParty.gold === 'function') ? $gameParty.gold() : ($gameParty._gold || 0);
+          document.getElementById('cheat-money').value = newv;
+          alert('Added 1000. Now '+newv);
+        }
+      }
+
+      /* =========================
+         Items Tab
+         ========================= */
+      function renderItemsTab(container){
+        const wrap = el('div');
+        if(!window.$dataItems || !window.$gameParty){
+          wrap.textContent = 'Game not loaded yet.';
+          container.appendChild(wrap);
+          return;
+        }
+        // render each item (could be many — but user asked full listing)
+        $dataItems.forEach(item => {
+          if (!item) return;
+          const id = item.id;
+          const count = $gameParty.numItems ? $gameParty.numItems(item) : 0;
+          const row = el('div');
+          row.className = 'row';
+          row.innerHTML =
+            `<label style="width:160px">${escapeHtml(item.name || ('Item '+id))}</label>
+             <input type="number" id="cheat-item-${id}" value="${count}" min="0">
+             <button class="btn small" data-id="${id}">Set</button>`;
+          wrap.appendChild(row);
+        });
+        container.appendChild(wrap);
+
+        // delegated pointer handler
+        wrap.addEventListener('pointerup', (ev) => {
+          const b = ev.target.closest('button[data-id]');
+          if(!b) return;
+          ev.preventDefault();
+          setItemFromButton(Number(b.dataset.id));
+        }, {passive:false});
+        wrap.addEventListener('click', (ev)=>{}); // fallback
+
+        function setItemFromButton(id){
+          const input = document.getElementById('cheat-item-'+id);
+          const v = parseInt(input.value, 10);
+          if(isNaN(v)) return;
+          const item = $dataItems[id];
+          const cur = $gameParty.numItems(item);
+          $gameParty.gainItem(item, v - cur);
+          alert('Item '+(item.name||id)+' set to '+v);
+        }
+      }
+
+      /* =========================
+         Actors Tab
+         ========================= */
+      function renderActorsTab(container){
+        const wrap = el('div');
+        if(!window.$gameActors || !window.$gameParty){
+          wrap.textContent = 'Game not loaded yet.';
+          container.appendChild(wrap);
+          return;
+        }
+        $gameParty.members().forEach(actor => {
+          const id = actor.actorId();
+          const block = el('div');
+          block.style.borderTop = '1px solid rgba(255,255,255,.04)';
+          block.style.paddingTop = '8px';
+          block.innerHTML =
+            `<div style="font-weight:700">${escapeHtml(actor.name())}</div>
+             <div class="row"><label>HP</label><input type="number" id="hp-${id}" value="${actor.hp}" min="0"><button class="btn small" data-set-hp="${id}">Set</button></div>
+             <div class="row"><label>MP</label><input type="number" id="mp-${id}" value="${actor.mp}" min="0"><button class="btn small" data-set-mp="${id}">Set</button></div>
+             <div class="row"><label>Level</label><input type="number" id="lv-${id}" value="${actor.level}" min="1"><button class="btn small" data-set-lv="${id}">Set</button></div>`;
+          wrap.appendChild(block);
+        });
+        container.appendChild(wrap);
+
+        // delegated pointer handling
+        wrap.addEventListener('pointerup', (ev) => {
+          const hpBtn = ev.target.closest('button[data-set-hp]');
+          if(hpBtn){
+            ev.preventDefault();
+            const id = Number(hpBtn.getAttribute('data-set-hp'));
+            const val = parseInt(document.getElementById('hp-'+id).value, 10);
+            if(!isNaN(val)){ const a = $gameActors.actor(id); if(a && isFunction(a.setHp)) a.setHp(val); alert('HP set'); }
+            return;
+          }
+          const mpBtn = ev.target.closest('button[data-set-mp]');
+          if(mpBtn){
+            ev.preventDefault();
+            const id = Number(mpBtn.getAttribute('data-set-mp'));
+            const val = parseInt(document.getElementById('mp-'+id).value, 10);
+            if(!isNaN(val)){ const a = $gameActors.actor(id); if(a && isFunction(a.setMp)) a.setMp(val); alert('MP set'); }
+            return;
+          }
+          const lvBtn = ev.target.closest('button[data-set-lv]');
+          if(lvBtn){
+            ev.preventDefault();
+            const id = Number(lvBtn.getAttribute('data-set-lv'));
+            const val = parseInt(document.getElementById('lv-'+id).value, 10);
+            if(!isNaN(val)){ const a = $gameActors.actor(id); if(a && isFunction(a.changeLevel)) a.changeLevel(val,false); alert('Level set'); }
+            return;
+          }
+        }, {passive:false});
+
+      }
+
+      /* =========================
+         Time Tab (Chronus if present)
+         ========================= */
+      // Default Chronus-like variable IDs you previously mentioned (best-effort)
+      const chronusFallbackVars = { weekday:135, month:137, day:139, hour:239, minute:240 };
+
+      function renderTimeTab(container){
+        const wrap = el('div');
+        if(!window.$gameVariables){
+          wrap.textContent = 'Game not loaded yet.';
+          container.appendChild(wrap);
+          return;
+        }
+
+        wrap.appendChild(el('div', '<div class="sub">This tab will attempt to set Chronus time (preferred). If Chronus is absent it will set variables. After setting, Chronus (if present) will refresh in-game effects.</div>'));
+
+        // Show fields: year (if Chronus supports), month, day, hour, minute
+        const row1 = el('div'); row1.className = 'row';
+        row1.innerHTML = `<label style="width:90px">Year</label><input type="number" id="time-year" value="${(window.$gameSystem && $gameSystem.chronus) ? $gameSystem.chronus().getYear() : 1}" min="1" style="width:90px"><label style="width:60px">Month</label><input type="number" id="time-month" value="${(window.$gameSystem && $gameSystem.chronus) ? $gameSystem.chronus().getMonth() : $gameVariables.value(chronusFallbackVars.month)||1}" min="1" style="width:70px">`;
+        wrap.appendChild(row1);
+
+        const row2 = el('div'); row2.className = 'row';
+        row2.innerHTML = `<label style="width:90px">Day</label><input type="number" id="time-day" value="${(window.$gameSystem && $gameSystem.chronus) ? $gameSystem.chronus().getDay() : $gameVariables.value(chronusFallbackVars.day)||1}" min="1" style="width:90px"><label style="width:60px">Hour</label><input type="number" id="time-hour" value="${(window.$gameSystem && $gameSystem.chronus) ? $gameSystem.chronus().getHour() : $gameVariables.value(chronusFallbackVars.hour)||0}" min="0" max="23" style="width:70px"><label style="width:60px">Minute</label><input type="number" id="time-minute" value="${(window.$gameSystem && $gameSystem.chronus) ? $gameSystem.chronus().getMinute() : $gameVariables.value(chronusFallbackVars.minute)||0}" min="0" max="59" style="width:70px">`;
+        wrap.appendChild(row2);
+
+        const btnRow = el('div'); btnRow.className = 'row';
+        btnRow.innerHTML = `<button class="btn small" id="time-apply">Set Date & Time (Chronus)</button>
+                            <button class="btn small" id="time-apply-vars">Set & also write common vars</button>
+                            <button class="btn small" id="time-refresh">Refresh</button>
+                            <div class="sub">If Chronus exists it will be used; otherwise variables will be written.</div>`;
+        wrap.appendChild(btnRow);
+        container.appendChild(wrap);
+
+        // handlers
+        const applyBtn = btnRow.querySelector('#time-apply');
+        bindPointerOnce(applyBtn, 'pointerup', (e)=>{ e.preventDefault(); applyChronusTime(false); });
+        applyBtn.addEventListener('click', ()=>applyChronusTime(false));
+
+        const applyVarsBtn = btnRow.querySelector('#time-apply-vars');
+        bindPointerOnce(applyVarsBtn, 'pointerup', (e)=>{ e.preventDefault(); applyChronusTime(true); });
+        applyVarsBtn.addEventListener('click', ()=>applyChronusTime(true));
+
+        const refreshBtn = btnRow.querySelector('#time-refresh');
+        bindPointerOnce(refreshBtn, 'pointerup', (e)=>{ e.preventDefault(); refreshFields(); });
+        refreshBtn.addEventListener('click', refreshFields);
+
+        function refreshFields(){
+          if(window.$gameSystem && $gameSystem.chronus){
+            const c = $gameSystem.chronus();
+            document.getElementById('time-year').value = c.getYear();
+            document.getElementById('time-month').value = c.getMonth();
+            document.getElementById('time-day').value = c.getDay();
+            document.getElementById('time-hour').value = c.getHour();
+            document.getElementById('time-minute').value = c.getMinute();
+          } else {
+            // fill from vars if present
+            try {
+              document.getElementById('time-month').value = Number($gameVariables.value(chronusFallbackVars.month)) || 1;
+              document.getElementById('time-day').value = Number($gameVariables.value(chronusFallbackVars.day)) || 1;
+              document.getElementById('time-hour').value = Number($gameVariables.value(chronusFallbackVars.hour)) || 0;
+              document.getElementById('time-minute').value = Number($gameVariables.value(chronusFallbackVars.minute)) || 0;
+            } catch(e) {}
+          }
+        }
+
+        function applyChronusTime(writeVarsToo){
+          const y = parseInt(document.getElementById('time-year').value, 10);
+          const m = parseInt(document.getElementById('time-month').value, 10);
+          const d = parseInt(document.getElementById('time-day').value, 10);
+          const h = parseInt(document.getElementById('time-hour').value, 10);
+          const mi = parseInt(document.getElementById('time-minute').value, 10);
+          if([y,m,d,h,mi].some(v => isNaN(v))){
+            alert('Invalid date/time values.');
+            return;
+          }
+          try {
+            if(window.$gameSystem && $gameSystem.chronus){
+              // Use Chronus API (preferred) — keep Chronus's own refresh logic
+              $gameSystem.chronus().setDay(y, m, d);
+              $gameSystem.chronus().setTime(h, mi);
+              // Chronus.demandRefresh already called inside setDay/setTime in plugin; no extra refresh required
+            } else {
+              // fallback: write to variables if known IDs
+              if(typeof $gameVariables !== 'undefined'){
+                if(chronusFallbackVars.month) $gameVariables.setValue(chronusFallbackVars.month, m);
+                if(chronusFallbackVars.day) $gameVariables.setValue(chronusFallbackVars.day, d);
+                if(chronusFallbackVars.hour) $gameVariables.setValue(chronusFallbackVars.hour, h);
+                if(chronusFallbackVars.minute) $gameVariables.setValue(chronusFallbackVars.minute, mi);
+              }
+            }
+            if(writeVarsToo && typeof $gameVariables !== 'undefined'){
+              // also write common known vars
+              if(chronusFallbackVars.weekday) $gameVariables.setValue(chronusFallbackVars.weekday, (window.$gameSystem && $gameSystem.chronus) ? $gameSystem.chronus().getWeekIndex() : 0);
+            }
+            alert('Time/date applied.');
+            refreshFields();
+          } catch(e){
+            console.error(e);
+            alert('Failed to set time: '+(e && e.message ? e.message : e));
+          }
+        }
+
+        // initial fill
+        refreshFields();
+      }
+
+      /* =========================
+         Vars Tab
+         ========================= */
+      function renderVarsTab(container){
+        const wrap = el('div');
+        if(!window.$dataSystem || !window.$gameVariables || !window.$gameSwitches){
+          wrap.textContent = 'Game not loaded yet.';
+          container.appendChild(wrap);
+          return;
+        }
+
+        const varRow = el('div');
+        varRow.className = 'row';
+        varRow.innerHTML =
+          `<label>Variable</label>
+           <select id="cheat-var-select" style="width:220px"></select>
+           <button class="btn small" id="cheat-var-refresh">Refresh</button>`;
+        wrap.appendChild(varRow);
+
+        const varEdit = el('div');
+        varEdit.className = 'row';
+        varEdit.innerHTML =
+          `<label>Value</label>
+           <input type="number" id="cheat-var-value" value="0">
+           <button class="btn small" id="cheat-var-set">Set</button>
+           <button class="btn small" id="cheat-var-add">+1</button>`;
+        wrap.appendChild(varEdit);
+
+        const swRow = el('div');
+        swRow.className = 'row';
+        swRow.innerHTML =
+          `<label>Switch</label>
+           <select id="cheat-sw-select" style="width:220px"></select>
+           <button class="btn small" id="cheat-sw-refresh">Refresh</button>`;
+        wrap.appendChild(swRow);
+
+        const swEdit = el('div');
+        swEdit.className = 'row';
+        swEdit.innerHTML =
+          `<label>Value</label>
+           <select id="cheat-sw-value"><option value="1">ON</option><option value="0">OFF</option></select>
+           <button class="btn small" id="cheat-sw-set">Set</button>`;
+        wrap.appendChild(swEdit);
+
+        function populateVarsAndSwitches(){
+          const varSelect = document.getElementById('cheat-var-select');
+          varSelect.innerHTML = '';
+          const vars = $dataSystem && $dataSystem.variables ? $dataSystem.variables : [];
+          for(let i=1;i<vars.length;i++){
+            const name = vars[i] && vars[i].length ? vars[i] : `Var ${i}`;
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = `${i} — ${name}`;
+            varSelect.appendChild(opt);
+          }
+
+          const swSelect = document.getElementById('cheat-sw-select');
+          swSelect.innerHTML = '';
+          const sws = $dataSystem && $dataSystem.switches ? $dataSystem.switches : [];
+          for(let i=1;i<sws.length;i++){
+            const name = sws[i] && sws[i].length ? sws[i] : `Switch ${i}`;
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = `${i} — ${name}`;
+            swSelect.appendChild(opt);
+          }
+
+          updateVarPreview();
+          updateSwPreview();
+        }
+
+        function updateVarPreview(){
+          const sel = document.getElementById('cheat-var-select');
+          const id = Number(sel.value) || 0;
+          const cur = $gameVariables.value(id);
+          document.getElementById('cheat-var-value').value = (typeof cur !== 'undefined' ? cur : '');
+        }
+        function updateSwPreview(){
+          const sel = document.getElementById('cheat-sw-select');
+          const id = Number(sel.value) || 0;
+          const cur = $gameSwitches.value(id) ? 1 : 0;
+          document.getElementById('cheat-sw-value').value = cur;
+        }
+
+        wrap.querySelector('#cheat-var-refresh').addEventListener('click', populateVarsAndSwitches);
+        wrap.querySelector('#cheat-var-set').addEventListener('click', ()=>{
+          const id = Number(document.getElementById('cheat-var-select').value);
+          const v = parseInt(document.getElementById('cheat-var-value').value, 10);
+          if(!isNaN(id) && !isNaN(v)) {
+            $gameVariables.setValue(id, v);
+            alert(`Var ${id} set to ${v}`);
+          }
+        });
+        wrap.querySelector('#cheat-var-add').addEventListener('click', ()=>{
+          const id = Number(document.getElementById('cheat-var-select').value);
+          const cur = Number($gameVariables.value(id) || 0);
+          $gameVariables.setValue(id, cur + 1);
+          updateVarPreview();
+        });
+
+        wrap.querySelector('#cheat-sw-refresh').addEventListener('click', populateVarsAndSwitches);
+        wrap.querySelector('#cheat-sw-set').addEventListener('click', ()=>{
+          const id = Number(document.getElementById('cheat-sw-select').value);
+          const v = Number(document.getElementById('cheat-sw-value').value) === 1;
+          if(!isNaN(id)){
+            $gameSwitches.setValue(id, v);
+            alert(`Switch ${id} set to ${v ? 'ON' : 'OFF'}`);
+          }
+        });
+
+        document.addEventListener('change', (e)=>{ /* nothing here - UI handled by controls */ });
+
+        document.getElementById('cheat-var-select').addEventListener('change', updateVarPreview);
+        document.getElementById('cheat-sw-select').addEventListener('change', updateSwPreview);
+
+        container.appendChild(wrap);
+        // initial populate
+        populateVarsAndSwitches();
+      }
+
+      /* =========================
+         Settings Tab
+         ========================= */
+      function renderSettingsTab(container){
+        const wrap = el('div');
+        wrap.innerHTML =
+          `<div class="row">
+             <label>Auto-save</label>
+             <select id="autosave-interval" style="width:120px">
+               <option value="300000">5 min</option>
+               <option value="600000">10 min</option>
+               <option value="900000">15 min</option>
+               <option value="1200000">20 min</option>
+               <option value="1800000">30 min</option>
+             </select>
+             <label style="width:70px">Slot</label>
+             <select id="autosave-slot" style="width:80px">
+               <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+               <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+             </select>
+             <button class="btn small" id="autosave-toggle">Enable</button>
+           </div>
+
+           <div class="row">
+             <button class="btn small" id="save-now">Save Now</button>
+             <button class="btn small" id="load-now">Load Now</button>
+             <select id="manual-slot" style="width:90px">
+               <option value="1">slot 1</option><option value="2">slot 2</option><option value="3">slot 3</option>
+               <option value="4">slot 4</option><option value="5">slot 5</option><option value="6">slot 6</option>
+             </select>
+           </div>
+
+           <div class="row"><span id="settingsStatus" class="status">Auto-save: OFF</span></div>
+
+           <div class="row">
+             <button class="btn small" id="force-open-save-menu">Force open Save menu</button>
+             <button class="btn small" id="force-open-load-menu">Force open Load menu</button>
+           </div>
+
+           <div class="sub">Auto-save is OFF by default (won't persist across reloads).</div>`;
+        container.appendChild(wrap);
+
+        const intSel = document.getElementById('autosave-interval');
+        const slotSel = document.getElementById('autosave-slot');
+        const toggleBtn = document.getElementById('autosave-toggle');
+        const manualSlot = document.getElementById('manual-slot');
+        const saveNowBtn = document.getElementById('save-now');
+        const loadNowBtn = document.getElementById('load-now');
+
+        // initial UI defaults
+        intSel.value = String(autosaveIntervalMs);
+        slotSel.value = String(autosaveSlot);
+        renderSettingsStatus();
+
+        intSel.addEventListener('change', ()=> {
+          autosaveIntervalMs = Number(intSel.value);
+          if(autosaveEnabled) enableAutosave(true);
+          renderSettingsStatus();
+        });
+        slotSel.addEventListener('change', ()=> {
+          autosaveSlot = Number(slotSel.value);
+          renderSettingsStatus();
+        });
+        toggleBtn.addEventListener('click', ()=> {
+          enableAutosave(!autosaveEnabled);
+          toggleBtn.textContent = autosaveEnabled ? 'Disable' : 'Enable';
+        });
+
+        saveNowBtn.addEventListener('click', ()=> {
+          const s = Number(manualSlot.value) || 1;
+          doSave(s, false);
+        });
+        loadNowBtn.addEventListener('click', ()=> {
+          const s = Number(manualSlot.value) || 1;
+          if(confirm('Load slot '+s+'? Current progress will be replaced.')) doLoad(s);
+        });
+
+        document.getElementById('force-open-save-menu').addEventListener('click', ()=> {
+          try { if(window.SceneManager) SceneManager.push(Scene_Save); else alert('Scene_Save unavailable'); } catch(e){ alert('Cannot open save menu: '+e.message); }
+        });
+        document.getElementById('force-open-load-menu').addEventListener('click', ()=> {
+          try { if(window.SceneManager) SceneManager.push(Scene_Load); else alert('Scene_Load unavailable'); } catch(e){ alert('Cannot open load menu: '+e.message); }
+        });
+
+        renderSettingsStatus();
+      }
+
+      /* =========================
+         ESC button - single trigger debounced
+         ========================= */
+      (function(){
+        let disabled = false;
+        function openMenuDirect(){
+          try {
+            if (window.SceneManager && SceneManager._scene) {
+              const sc = SceneManager._scene;
+              if (window.Scene_Map && sc instanceof Scene_Map) {
+                if (window.$gamePlayer && $gamePlayer.canMove && $gamePlayer.canMove()) {
+                  if (window.SoundManager && SoundManager.playOk) SoundManager.playOk();
+                  if (window.Window_MenuCommand && Window_MenuCommand.initCommandPosition) {
+                    Window_MenuCommand.initCommandPosition();
+                  }
+                  SceneManager.push(Scene_Menu);
+                  return true;
+                }
+              }
+              // fallback: if a scene stack exists, pop
+              if (SceneManager._stack && SceneManager._stack.length > 1) {
+                if(typeof SceneManager.pop === 'function') SceneManager.pop();
+                else if(typeof SceneManager.goto === 'function') SceneManager.goto(Scene_Map);
+                return true;
+              }
+            }
+          } catch(e){}
+          return false;
+        }
+        function onEscPress(e){
+          try { if(e && e.preventDefault) e.preventDefault(); } catch(_) {}
+          if(disabled) return;
+          disabled = true;
+          setTimeout(()=> disabled = false, 450); // small debounce
+          if(!openMenuDirect()){
+            try {
+              const ev = new KeyboardEvent('keydown', {key:'Escape', code:'Escape', bubbles:true, cancelable:true});
+              Object.defineProperty(ev, 'keyCode', {get: ()=>27});
+              Object.defineProperty(ev, 'which', {get: ()=>27});
+              document.dispatchEvent(ev);
+              window.dispatchEvent(ev);
+              setTimeout(()=> {
+                const ev2 = new KeyboardEvent('keyup', {key:'Escape', code:'Escape', bubbles:true, cancelable:true});
+                Object.defineProperty(ev2, 'keyCode', {get: ()=>27});
+                Object.defineProperty(ev2, 'which', {get: ()=>27});
+                document.dispatchEvent(ev2);
+                window.dispatchEvent(ev2);
+              }, 16);
+            } catch(_) {}
+          }
+        }
+        // pointer events for robust touch+mouse support
+        bindPointerOnce(escBtn, 'pointerup', (e)=>{ e.preventDefault(); onEscPress(e); });
+        escBtn.addEventListener('click', onEscPress);
+        escBtn.setAttribute('ontouchstart','void(0)');
+      })();
+
+      /* =========================
+         Fixes & initialization
+         ========================= */
+
+      // prevent certain touch default behaviors when the cheat panel is open
+      // But keep pointer events functioning for panel controls.
+      document.addEventListener('touchmove', function(e){
+        if(panel.classList.contains('open')) {
+          // Prevent page scroll when interacting inside open cheat panel (but allow inner scrollers)
+          // Only cancel when touching outside scrollable content? Simpler: prevent default on body-level touchmove while open.
+          e.preventDefault();
+        }
+      }, {passive:false});
+
+      // Ensure some interactive elements don't remain unresponsive after first use on certain Android webviews:
+      // When panel is closed, remove pointer-capture from any element.
+      function releasePointerCaptures(){
+        try {
+          if (typeof document.releasePointerCapture === 'function') {
+            // best-effort: release on doc
+          }
+        } catch(e){}
+      }
+
+      // ensure autosave is OFF initially
+      enableAutosave(false);
+
+      // default tab when opening
+      window.__renderCheat = function(tab){ showCheatTab(tab || 'money'); };
+
+      // make sure panel doesn't block keyboard input to game if hidden
+      panel.setAttribute('aria-hidden','true');
+
+      // Expose for debugging
+      window.__cheat = {
+        open: openPanel,
+        close: closePanel,
+        save: doSave,
+        load: doLoad,
+        enableAutosave: function(v){ enableAutosave(!!v); }
+      };
+
+    })();
+    </script>
+  </body>
 </html>

@@ -1,806 +1,204 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="apple-mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-        <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0">
-        <link rel="icon" href="icon/icon.png" type="image/png">
-        <link rel="apple-touch-icon" href="icon/icon.png">
-        <link rel="stylesheet" type="text/css" href="fonts/gamefont.css">
-        <title>魔法少女天穹法妮雅 v1.05</title>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0">
+    <link rel="icon" href="icon/icon.png" type="image/png">
+    <link rel="apple-touch-icon" href="icon/icon.png">
+    <link rel="stylesheet" href="fonts/gamefont.css">
+    <title>魔法少女天穹法妮雅 v1.05</title>
 
-        <style>
-            /* ------- Cheat Panel styles (keeps look from previous builds) ------- */
-            #cheatPanel {
-                position: fixed;
-                top: 0;
-                right: -380px;
-                width: 380px;
-                height: 100%;
-                background: rgba(17,17,17,.98);
-                color: #fff;
-                overflow-y: auto;
-                z-index: 2147483646; /* very high so it sits above game */
-                padding: 12px;
-                box-sizing: border-box;
-                transition: right .28s ease;
-                font-family: Arial, sans-serif;
-                font-size: 14px;
-                -webkit-overflow-scrolling: touch;
-                border-left: 1px solid rgba(255,255,255,.04);
-                touch-action: manipulation;
-            }
-            #cheatPanel.open { right: 0; }
-            #cheatPanel h2 { margin:8px 0 10px; font-size:16px; border-bottom:1px solid #444; padding-bottom:6px; }
-            #cheatClose { position: sticky; top:0; background:#333; border:1px solid #555; color:#fff; border-radius:6px; padding:6px 10px; margin-bottom:8px; cursor:pointer; display:inline-block; }
-            #cheatTabs { margin-bottom:10px; display:flex; flex-wrap:wrap; gap:8px; }
-            #cheatTabs button {
-                background:#2a2a2a; border:1px solid #555; color:#fff; border-radius:6px; padding:6px 10px; cursor:pointer; font-size:13px;
-            }
-            #cheatPanel label { display:inline-block; width:120px; vertical-align:middle; }
-            #cheatPanel input[type="number"], #cheatPanel input[type="text"], #cheatPanel select { width:120px; margin-right:6px; padding:4px; box-sizing:border-box; vertical-align:middle; }
-            #cheatPanel .row { margin:8px 0; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-            #cheatPanel hr { border:0; border-top:1px solid #333; margin:8px 0; }
-            #cheatPanel .sub { color:#bbb; font-size:12px; margin-top:6px; }
+    <style>
+      body, html { margin:0; padding:0; background:black; height:100%; overflow:hidden; }
+      canvas,body{ -webkit-user-select:none; user-select:none; touch-action:manipulation; }
 
-            /* Floating open button */
-            #cheatFab {
-                position: fixed;
-                right: 12px;
-                top: 50%;
-                transform: translateY(-50%);
-                width: 44px;
-                height: 44px;
-                line-height: 44px;
-                text-align: center;
-                border-radius: 22px;
-                background: rgba(34,34,34,.95);
-                color: #fff;
-                border: 1px solid #555;
-                box-shadow: 0 2px 10px rgba(0,0,0,.35);
-                z-index: 2147483647; /* top */
-                cursor: pointer;
-                user-select: none;
-                touch-action: manipulation;
-            }
+      /* Transparent overlay that catches all taps when menu open */
+      #cheatOverlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.05);
+        z-index: 2147483645;
+        display: none;
+      }
+      #cheatOverlay.active { display:block; }
 
-            /* ESC button */
-            #escButton {
-                position: fixed;
-                left: 12px;
-                bottom: 12px;
-                width: 64px;
-                height: 64px;
-                border-radius: 50%;
-                background: rgba(68,68,68,0.95);
-                color: #fff;
-                border: 1px solid #555;
-                font-size: 16px;
-                font-weight: bold;
-                z-index: 2147483647;
-                cursor: pointer;
-                user-select: none;
-                display: flex;
-                align-items:center;
-                justify-content:center;
-                box-shadow: 0 2px 10px rgba(0,0,0,.35);
-                touch-action: manipulation;
-            }
+      #cheatPanel {
+        position: fixed;
+        top: 0;
+        right: -380px;
+        width: 380px;
+        height: 100%;
+        background: rgba(17,17,17,.98);
+        color: #fff;
+        overflow-y: auto;
+        z-index: 2147483646;
+        padding: 12px;
+        box-sizing: border-box;
+        transition: right .28s ease;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        border-left: 1px solid rgba(255,255,255,.04);
+      }
+      #cheatPanel.open { right: 0; }
+      #cheatPanel h2 { margin:8px 0 10px; font-size:16px; border-bottom:1px solid #444; padding-bottom:6px; }
+      #cheatTabs { margin-bottom:10px; display:flex; flex-wrap:wrap; gap:8px; }
+      #cheatTabs button { background:#2a2a2a;border:1px solid #555;color:#fff;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:13px }
+      #cheatClose{background:#333;border:1px solid #555;color:#fff;border-radius:6px;padding:6px 10px;margin-bottom:8px;cursor:pointer;display:inline-block;}
+      #cheatPanel label{display:inline-block;width:120px;vertical-align:middle;}
+      #cheatPanel input,#cheatPanel select{width:120px;margin-right:6px;padding:4px;box-sizing:border-box;vertical-align:middle;}
+      #cheatPanel .row{margin:8px 0;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+      .btn{background:#2c2c2c;border:1px solid #555;padding:6px 10px;border-radius:6px;color:#fff;cursor:pointer;}
+      .btn.small{padding:4px 8px;font-size:13px;}
+      .muted{color:#9aa;font-size:13px;}
+      .status{font-size:13px;margin-top:8px;color:#9df;}
 
-            /* small helpers */
-            .btn { background:#2c2c2c;border:1px solid #555;padding:6px 10px;border-radius:6px;color:#fff;cursor:pointer }
-            .btn.small { padding:4px 8px; font-size:13px }
-            .muted { color:#9aa; font-size:13px }
-            .status { font-size:13px; margin-top:8px; color:#9df; }
-            canvas, body { -webkit-user-select:none; user-select:none; touch-action:manipulation; }
-            /* overlay to trap focus on mobile if necessary (hidden normally) */
-            #cheatBackdrop {
-                position: fixed;
-                inset: 0;
-                background: transparent;
-                z-index: 2147483645;
-                display: none;
-            }
-            #cheatBackdrop.active { display:block; }
-        </style>
-    </head>
-    <body style="background-color: black">
-        <!-- keep your RPG Maker MV core files as-is -->
-        <script type="text/javascript" src="js/libs/pixi.js"></script>
-        <script type="text/javascript" src="js/libs/pixi-tilemap.js"></script>
-        <script type="text/javascript" src="js/libs/pixi-picture.js"></script>
-        <script type="text/javascript" src="js/libs/fpsmeter.js"></script>
-        <script type="text/javascript" src="js/libs/lz-string.js"></script>
-        <script type="text/javascript" src="js/libs/iphone-inline-video.browser.js"></script>
-        <script type="text/javascript" src="js/rpg_core.js"></script>
-        <script type="text/javascript" src="js/rpg_managers.js"></script>
-        <script type="text/javascript" src="js/rpg_objects.js"></script>
-        <script type="text/javascript" src="js/rpg_scenes.js"></script>
-        <script type="text/javascript" src="js/rpg_sprites.js"></script>
-        <script type="text/javascript" src="js/rpg_windows.js"></script>
-        <script type="text/javascript" src="js/plugins.js"></script>
-        <script type="text/javascript" src="js/main.js"></script>
+      #cheatFab {
+        position: fixed;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 44px;
+        height: 44px;
+        line-height: 44px;
+        text-align: center;
+        border-radius: 22px;
+        background: rgba(34,34,34,.95);
+        color: #fff;
+        border: 1px solid #555;
+        box-shadow: 0 2px 10px rgba(0,0,0,.35);
+        z-index: 2147483647;
+        cursor: pointer;
+      }
 
-        <!-- Cheat UI -->
-        <div id="cheatFab" title="Open cheats">≡</div>
+      #escButton {
+        position: fixed;
+        left: 12px;
+        bottom: 12px;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: rgba(68,68,68,0.95);
+        color: #fff;
+        border: 1px solid #555;
+        font-size: 16px;
+        font-weight: bold;
+        z-index: 2147483647;
+        display: flex;
+        align-items:center;
+        justify-content:center;
+        box-shadow: 0 2px 10px rgba(0,0,0,.35);
+        cursor:pointer;
+      }
+    </style>
+  </head>
 
-        <div id="cheatBackdrop" aria-hidden="true"></div>
+  <body>
+    <!-- Game scripts (unchanged) -->
+    <script src="js/libs/pixi.js"></script>
+    <script src="js/libs/pixi-tilemap.js"></script>
+    <script src="js/libs/pixi-picture.js"></script>
+    <script src="js/libs/fpsmeter.js"></script>
+    <script src="js/libs/lz-string.js"></script>
+    <script src="js/libs/iphone-inline-video.browser.js"></script>
+    <script src="js/rpg_core.js"></script>
+    <script src="js/rpg_managers.js"></script>
+    <script src="js/rpg_objects.js"></script>
+    <script src="js/rpg_scenes.js"></script>
+    <script src="js/rpg_sprites.js"></script>
+    <script src="js/rpg_windows.js"></script>
+    <script src="js/plugins.js"></script>
+    <script src="js/main.js"></script>
 
-        <div id="cheatPanel" aria-hidden="true">
-            <button id="cheatClose" class="btn small">Close</button>
-            <h2>Cheat Menu</h2>
-            <div id="cheatTabs" aria-hidden="false">
-                <button type="button" data-tab="money">Money</button>
-                <button type="button" data-tab="items">Items</button>
-                <button type="button" data-tab="actors">Actors</button>
-                <button type="button" data-tab="time">Time</button>
-                <button type="button" data-tab="vars">Vars</button>
-                <button type="button" data-tab="settings">Settings</button>
-            </div>
-            <div id="cheatContent" class="muted">Choose a tab…</div>
-        </div>
+    <!-- Cheat UI -->
+    <div id="cheatFab" title="Open cheats">≡</div>
+    <div id="cheatOverlay"></div>
 
-        <button id="escButton" type="button" title="Open menu (ESC)">ESC</button>
+    <div id="cheatPanel" aria-hidden="true">
+      <button id="cheatClose" class="btn small">Close</button>
+      <h2>Cheat Menu</h2>
+      <div id="cheatTabs">
+        <button data-tab="money">Money</button>
+        <button data-tab="items">Items</button>
+        <button data-tab="actors">Actors</button>
+        <button data-tab="time">Time</button>
+        <button data-tab="vars">Vars</button>
+        <button data-tab="settings">Settings</button>
+      </div>
+      <div id="cheatContent" class="muted">Choose a tab…</div>
+    </div>
 
-        <script>
-        (function(){
-            // ---------- elements ----------
-            const fab = document.getElementById('cheatFab');
-            const panel = document.getElementById('cheatPanel');
-            const closeBtn = document.getElementById('cheatClose');
-            const tabs = document.getElementById('cheatTabs');
-            const content = document.getElementById('cheatContent');
-            const backdrop = document.getElementById('cheatBackdrop');
+    <button id="escButton" title="ESC Menu">ESC</button>
 
-            // state
-            let autosaveTimer = null;
-            let autosaveEnabled = false;
-            let autosaveIntervalMs = 5 * 60 * 1000;
-            let autosaveSlot = 1;
+    <script>
+    (function(){
+      const fab = document.getElementById('cheatFab');
+      const panel = document.getElementById('cheatPanel');
+      const closeBtn = document.getElementById('cheatClose');
+      const overlay = document.getElementById('cheatOverlay');
+      const tabs = document.getElementById('cheatTabs');
+      const content = document.getElementById('cheatContent');
 
-            // track disabled canvases so we can restore
-            let disabledCanvases = [];
+      function openPanel(){
+        panel.classList.add('open');
+        overlay.classList.add('active');
+        fab.style.display='none';
+      }
+      function closePanel(){
+        panel.classList.remove('open');
+        overlay.classList.remove('active');
+        fab.style.display='block';
+      }
 
-            // helper: disable pointer events for game canvases (fix touch problems on iPad/Android)
-            function disableGamePointerEvents(){
-                disabledCanvases = [];
-                const canvasEls = Array.from(document.querySelectorAll('canvas'));
-                canvasEls.forEach(c => {
-                    // store previous pointerEvents
-                    disabledCanvases.push({el: c, prev: c.style.pointerEvents || ''});
-                    c.style.pointerEvents = 'none';
-                });
-                // also show a backdrop to ensure pointer capture on mobile (prevents accidental passes)
-                backdrop.classList.add('active');
-            }
-            function restoreGamePointerEvents(){
-                disabledCanvases.forEach(o => {
-                    try { o.el.style.pointerEvents = o.prev; } catch(e) {}
-                });
-                disabledCanvases = [];
-                backdrop.classList.remove('active');
-            }
+      // Ensure overlay routes events properly
+      overlay.addEventListener('click', e=>{
+        // if click outside the panel area -> close
+        if(!panel.contains(e.target)) closePanel();
+      });
 
-            function openPanel(){
-                panel.classList.add('open');
-                panel.setAttribute('aria-hidden','false');
-                fab.style.display = 'none';
-                disableGamePointerEvents();
-                // refresh currently selected tab (if any)
-                const tab = panel.dataset.tab || 'money';
-                showCheatTab(tab);
-            }
-            function closePanel(){
-                panel.classList.remove('open');
-                panel.setAttribute('aria-hidden','true');
-                fab.style.display = 'block';
-                restoreGamePointerEvents();
-            }
+      // click & touch listeners
+      [fab, closeBtn].forEach(el=>{
+        el.addEventListener('click', e=>{ e.preventDefault(); e.stopPropagation(); el===fab?openPanel():closePanel(); });
+        el.addEventListener('touchstart', e=>{ e.preventDefault(); e.stopPropagation(); el===fab?openPanel():closePanel(); }, {passive:false});
+      });
 
-            // Avoid passive issues: use touchstart and click, make sure to call preventDefault on touchstart when needed
-            function addActiveListener(el, handler){
-                el.addEventListener('click', handler);
-                el.addEventListener('touchstart', function(ev){
-                    // stop the page's default passive behaviour from interfering with the UI
-                    try { ev.preventDefault(); } catch(_) {}
-                    handler(ev);
-                }, {passive:false});
-            }
+      tabs.addEventListener('click', e=>{
+        const b=e.target.closest('button[data-tab]');
+        if(b) showCheatTab(b.dataset.tab);
+      });
+      tabs.addEventListener('touchstart', e=>{
+        const b=e.target.closest('button[data-tab]');
+        if(b){ e.preventDefault(); showCheatTab(b.dataset.tab); }
+      },{passive:false});
 
-            addActiveListener(fab, openPanel);
-            addActiveListener(closeBtn, closePanel);
+      function el(tag, html){const d=document.createElement(tag);if(html)d.innerHTML=html;return d;}
+      function escapeHtml(s){return s?String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])):'';}
 
-            // tabs
-            tabs.addEventListener('click', function(e){
-                const b = e.target.closest('button[data-tab]');
-                if (b) showCheatTab(b.dataset.tab);
-            });
-            // touch support for tab buttons
-            tabs.addEventListener('touchstart', function(e){
-                const b = e.target.closest('button[data-tab]');
-                if (b) { try { e.preventDefault(); } catch(_){}; showCheatTab(b.dataset.tab); }
-            }, {passive:false});
+      // Basic example tabs to show working touch/click
+      function showCheatTab(tab){
+        content.innerHTML='';
+        if(tab==='money') content.innerHTML='<div class="row"><label>Money:</label><input type="number" id="moneyInput" value="0"><button class="btn small" id="setMoney">Set</button></div>';
+        else if(tab==='vars') content.innerHTML='<div class="row"><label>Var:</label><input type="number" id="varInput" value="0"><button class="btn small" id="setVar">Set</button></div>';
+        else content.textContent='This tab: '+tab;
+        // Example handler
+        const btn = content.querySelector('button');
+        if(btn){
+          btn.addEventListener('click',()=>alert('Clicked '+tab+' OK'));
+          btn.addEventListener('touchstart',e=>{e.preventDefault();alert('Touched '+tab+' OK');},{passive:false});
+        }
+      }
 
-            // small DOM helpers
-            function el(tag, html){ const d = document.createElement(tag); if (html !== undefined) d.innerHTML = html; return d; }
-            function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+      // ESC button
+      const escBtn=document.getElementById('escButton');
+      escBtn.addEventListener('click',()=>{try{
+        const ev=new KeyboardEvent('keydown',{key:'Escape',code:'Escape',bubbles:true,cancelable:true});
+        document.dispatchEvent(ev);window.dispatchEvent(ev);
+      }catch(e){}});
+      escBtn.addEventListener('touchstart',e=>{e.preventDefault();const ev=new KeyboardEvent('keydown',{key:'Escape',code:'Escape',bubbles:true,cancelable:true});document.dispatchEvent(ev);},{passive:false});
 
-            // ---------- autosave ----------
-            function enableAutosave(enabled){
-                autosaveEnabled = !!enabled;
-                if (autosaveTimer) { clearInterval(autosaveTimer); autosaveTimer = null; }
-                if (autosaveEnabled) {
-                    autosaveTimer = setInterval(()=> {
-                        try { doSave(autosaveSlot, true); } catch(e){ console.warn('Auto-save failed', e); }
-                    }, autosaveIntervalMs);
-                }
-                renderSettingsStatus();
-            }
-            function renderSettingsStatus(){
-                const s = document.getElementById('settingsStatus');
-                if (!s) return;
-                s.textContent = autosaveEnabled ? `Auto-save: every ${autosaveIntervalMs/60000} min (slot ${autosaveSlot})` : 'Auto-save: OFF';
-            }
-
-            // ---------- Save / Load ----------
-            async function doSave(slot, silent){
-                if (!window.DataManager || typeof DataManager.saveGame !== 'function') {
-                    alert('Save function not available in this environment.');
-                    return;
-                }
-                slot = Number(slot) || 1;
-                try {
-                    const ok = await DataManager.saveGame(slot);
-                    if (!silent) alert(ok ? `Saved slot ${slot}` : `Save failed`);
-                } catch(e){
-                    console.error('Save error', e);
-                    alert('Save failed: ' + (e && e.message ? e.message : e));
-                }
-            }
-            async function doLoad(slot){
-                if (!window.DataManager || typeof DataManager.loadGame !== 'function') {
-                    alert('Load function not available in this environment.');
-                    return;
-                }
-                slot = Number(slot) || 1;
-                try {
-                    const ok = await DataManager.loadGame(slot);
-                    if (ok) {
-                        if (window.SceneManager && typeof SceneManager.reload === 'function') {
-                            SceneManager.reload();
-                        } else {
-                            location.reload();
-                        }
-                    } else {
-                        alert('Load failed (no saved data).');
-                    }
-                } catch(e){
-                    console.error('Load error', e);
-                    alert('Load failed: ' + (e && e.message ? e.message : e));
-                }
-            }
-
-            // ---------- Tab rendering ----------
-            window.showCheatTab = function(tab){
-                panel.dataset.tab = tab;
-                content.innerHTML = '';
-                try {
-                    if (tab === 'money') return renderMoneyTab(content);
-                    if (tab === 'items') return renderItemsTab(content);
-                    if (tab === 'actors') return renderActorsTab(content);
-                    if (tab === 'time') return renderTimeTab(content);
-                    if (tab === 'vars') return renderVarsTab(content);
-                    if (tab === 'settings') return renderSettingsTab(content);
-                } catch (e) {
-                    content.textContent = 'Error rendering tab: ' + e.message;
-                    console.error(e);
-                }
-            };
-
-            // ---------- Money ----------
-            function renderMoneyTab(container){
-                const wrapper = el('div');
-                if (!window.$gameParty) { wrapper.textContent = 'Game not loaded yet.'; container.appendChild(wrapper); return; }
-                const gold = (typeof $gameParty.gold === 'function') ? $gameParty.gold() : ($gameParty._gold || 0);
-                const row = el('div', `<label>Money</label>
-                    <input type="number" id="cheat-money" value="${gold}" min="0">
-                    <button class="btn small" id="btn-set-money">Set</button>
-                    <button class="btn small" id="btn-add-money">+1000</button>`);
-                row.className = 'row';
-                wrapper.appendChild(row);
-                container.appendChild(wrapper);
-
-                addActiveListener(wrapper.querySelector('#btn-set-money'), ()=>{
-                    const v = parseInt(document.getElementById('cheat-money').value, 10);
-                    if (!isNaN(v) && window.$gameParty) {
-                        if (typeof $gameParty._gold !== 'undefined') $gameParty._gold = v;
-                        if (typeof $gameParty.gainGold === 'function') {
-                            const cur = (typeof $gameParty.gold === 'function') ? $gameParty.gold() : ($gameParty._gold || 0);
-                            $gameParty.gainGold(v - cur);
-                        }
-                        alert('Money set to ' + v);
-                    }
-                });
-
-                addActiveListener(wrapper.querySelector('#btn-add-money'), ()=>{
-                    if (!window.$gameParty) return;
-                    if (typeof $gameParty.gainGold === 'function') $gameParty.gainGold(1000);
-                    else if (typeof $gameParty._gold !== 'undefined') $gameParty._gold = ($gameParty._gold || 0) + 1000;
-                    const newv = (typeof $gameParty.gold === 'function') ? $gameParty.gold() : ($gameParty._gold || 0);
-                    document.getElementById('cheat-money').value = newv;
-                    alert('Added 1000. Now ' + newv);
-                });
-            }
-
-            // ---------- Items ----------
-            function renderItemsTab(container){
-                const wrapper = el('div');
-                if (!window.$dataItems || !window.$gameParty) { wrapper.textContent = 'Game not loaded yet.'; container.appendChild(wrapper); return; }
-                $dataItems.forEach(item => {
-                    if (!item) return;
-                    const id = item.id;
-                    const count = $gameParty.numItems ? $gameParty.numItems(item) : 0;
-                    const row = el('div');
-                    row.className = 'row';
-                    row.innerHTML = `<label style="width:160px">${escapeHtml(item.name || ('Item '+id))}</label>
-                        <input type="number" id="cheat-item-${id}" value="${count}" min="0">
-                        <button class="btn small" data-id="${id}">Set</button>`;
-                    wrapper.appendChild(row);
-                });
-                container.appendChild(wrapper);
-
-                // delegation (touch & click)
-                wrapper.addEventListener('click', function(ev){
-                    const btn = ev.target.closest('button[data-id]');
-                    if (!btn) return;
-                    const id = Number(btn.dataset.id);
-                    const input = document.getElementById('cheat-item-'+id);
-                    const v = parseInt(input.value, 10);
-                    if (isNaN(v)) return;
-                    const item = $dataItems[id];
-                    const cur = $gameParty.numItems(item);
-                    $gameParty.gainItem(item, v - cur);
-                    alert('Item ' + (item.name || id) + ' set to ' + v);
-                });
-                wrapper.addEventListener('touchstart', function(ev){
-                    try { ev.preventDefault(); } catch(_) {}
-                    const btn = ev.target.closest('button[data-id]');
-                    if (!btn) return;
-                    const id = Number(btn.dataset.id);
-                    const input = document.getElementById('cheat-item-'+id);
-                    const v = parseInt(input.value, 10);
-                    if (isNaN(v)) return;
-                    const item = $dataItems[id];
-                    const cur = $gameParty.numItems(item);
-                    $gameParty.gainItem(item, v - cur);
-                    alert('Item ' + (item.name || id) + ' set to ' + v);
-                }, {passive:false});
-            }
-
-            // ---------- Actors ----------
-            function renderActorsTab(container){
-                const wrapper = el('div');
-                if (!window.$gameActors || !window.$gameParty) { wrapper.textContent = 'Game not loaded yet.'; container.appendChild(wrapper); return; }
-                $gameParty.members().forEach(actor => {
-                    const id = actor.actorId();
-                    const block = el('div');
-                    block.style.borderTop = '1px solid rgba(255,255,255,.04)';
-                    block.style.paddingTop = '8px';
-                    block.innerHTML = `<div style="font-weight:700">${escapeHtml(actor.name())}</div>
-                        <div class="row"><label>HP</label><input type="number" id="hp-${id}" value="${actor.hp}" min="0"><button class="btn small" data-set-hp="${id}">Set</button></div>
-                        <div class="row"><label>MP</label><input type="number" id="mp-${id}" value="${actor.mp}" min="0"><button class="btn small" data-set-mp="${id}">Set</button></div>
-                        <div class="row"><label>Level</label><input type="number" id="lv-${id}" value="${actor.level}" min="1"><button class="btn small" data-set-lv="${id}">Set</button></div>`;
-                    wrapper.appendChild(block);
-                });
-                container.appendChild(wrapper);
-
-                wrapper.addEventListener('click', function(ev){
-                    const hpBtn = ev.target.closest('button[data-set-hp]');
-                    if (hpBtn) {
-                        const id = Number(hpBtn.getAttribute('data-set-hp'));
-                        const val = parseInt(document.getElementById('hp-'+id).value, 10);
-                        if (!isNaN(val)) { const a = $gameActors.actor(id); if (a) a.setHp(val); alert('HP set'); }
-                        return;
-                    }
-                    const mpBtn = ev.target.closest('button[data-set-mp]');
-                    if (mpBtn) {
-                        const id = Number(mpBtn.getAttribute('data-set-mp'));
-                        const val = parseInt(document.getElementById('mp-'+id).value, 10);
-                        if (!isNaN(val)) { const a = $gameActors.actor(id); if (a) a.setMp(val); alert('MP set'); }
-                        return;
-                    }
-                    const lvBtn = ev.target.closest('button[data-set-lv]');
-                    if (lvBtn) {
-                        const id = Number(lvBtn.getAttribute('data-set-lv'));
-                        const val = parseInt(document.getElementById('lv-'+id).value, 10);
-                        if (!isNaN(val)) { const a = $gameActors.actor(id); if (a) a.changeLevel(val, false); alert('Level set'); }
-                        return;
-                    }
-                });
-
-                wrapper.addEventListener('touchstart', function(ev){
-                    try { ev.preventDefault(); } catch(_) {}
-                    const hpBtn = ev.target.closest('button[data-set-hp]');
-                    if (hpBtn) {
-                        const id = Number(hpBtn.getAttribute('data-set-hp'));
-                        const val = parseInt(document.getElementById('hp-'+id).value, 10);
-                        if (!isNaN(val)) { const a = $gameActors.actor(id); if (a) a.setHp(val); alert('HP set'); }
-                        return;
-                    }
-                    const mpBtn = ev.target.closest('button[data-set-mp]');
-                    if (mpBtn) {
-                        const id = Number(mpBtn.getAttribute('data-set-mp'));
-                        const val = parseInt(document.getElementById('mp-'+id).value, 10);
-                        if (!isNaN(val)) { const a = $gameActors.actor(id); if (a) a.setMp(val); alert('MP set'); }
-                        return;
-                    }
-                    const lvBtn = ev.target.closest('button[data-set-lv]');
-                    if (lvBtn) {
-                        const id = Number(lvBtn.getAttribute('data-set-lv'));
-                        const val = parseInt(document.getElementById('lv-'+id).value, 10);
-                        if (!isNaN(val)) { const a = $gameActors.actor(id); if (a) a.changeLevel(val, false); alert('Level set'); }
-                        return;
-                    }
-                }, {passive:false});
-            }
-
-            // ---------- Time tab (Chronus) ----------
-            function renderTimeTab(container){
-                const wrapper = el('div');
-                if (!window.$gameSystem || typeof $gameSystem.chronus !== 'function' || !window.$gameVariables) {
-                    wrapper.textContent = 'Chronus (time plugin) not available yet.';
-                    container.appendChild(wrapper);
-                    return;
-                }
-                wrapper.appendChild(el('div','<div class="sub">Change Chronus date & time directly. Chronus will update map effects and tint when appropriate.</div>'));
-
-                // Year / Month / Day / Hour / Minute
-                const row1 = el('div'); row1.className = 'row';
-                row1.innerHTML = `<label style="width:80px">Year</label><input type="number" id="time-year" value="${$gameSystem.chronus().getYear()}" min="1" style="width:90px"><label style="width:60px">Month</label><input type="number" id="time-month" value="${$gameSystem.chronus().getMonth()}" min="1" style="width:70px">`;
-                const row2 = el('div'); row2.className = 'row';
-                row2.innerHTML = `<label style="width:80px">Day</label><input type="number" id="time-day" value="${$gameSystem.chronus().getDay()}" min="1" style="width:90px"><label style="width:60px">Hour</label><input type="number" id="time-hour" value="${$gameSystem.chronus().getHour()}" min="0" max="23" style="width:70px"><label style="width:60px">Minute</label><input type="number" id="time-minute" value="${$gameSystem.chronus().getMinute()}" min="0" max="59" style="width:70px">`;
-                wrapper.appendChild(row1); wrapper.appendChild(row2);
-
-                const btnRow = el('div'); btnRow.className = 'row';
-                btnRow.innerHTML = `<button class="btn small" id="time-apply">Set Date & Time (Chronus)</button>
-                    <button class="btn small" id="time-apply-vars">Set Chronus + Common Vars</button>
-                    <button class="btn small" id="time-refresh">Refresh</button>
-                    <div class="sub">When using Set, Chronus will update internal state immediately.</div>`;
-                wrapper.appendChild(btnRow);
-                container.appendChild(wrapper);
-
-                function refreshFields(){
-                    const c = $gameSystem.chronus();
-                    document.getElementById('time-year').value = c.getYear();
-                    document.getElementById('time-month').value = c.getMonth();
-                    document.getElementById('time-day').value = c.getDay();
-                    document.getElementById('time-hour').value = c.getHour();
-                    document.getElementById('time-minute').value = c.getMinute();
-                }
-
-                addActiveListener(btnRow.querySelector('#time-refresh'), refreshFields);
-
-                addActiveListener(btnRow.querySelector('#time-apply'), ()=>{
-                    try {
-                        const y = parseInt(document.getElementById('time-year').value, 10);
-                        const m = parseInt(document.getElementById('time-month').value, 10);
-                        const d = parseInt(document.getElementById('time-day').value, 10);
-                        const h = parseInt(document.getElementById('time-hour').value, 10);
-                        const mi= parseInt(document.getElementById('time-minute').value, 10);
-                        if ([y,m,d,h,mi].some(v => isNaN(v))) { alert('Invalid values'); return; }
-                        // Set day then time so Chronus recomputes day/hour properly
-                        $gameSystem.chronus().setDay(y,m,d);
-                        $gameSystem.chronus().setTime(h,mi);
-                        // demand refresh handled by Chronus.setDay/setTime
-                        alert('Chronus date/time set.');
-                        refreshFields();
-                    } catch(e){
-                        console.error(e); alert('Failed to set Chronus time: ' + (e && e.message ? e.message : e));
-                    }
-                });
-
-                addActiveListener(btnRow.querySelector('#time-apply-vars'), ()=>{
-                    try {
-                        const y = parseInt(document.getElementById('time-year').value, 10);
-                        const m = parseInt(document.getElementById('time-month').value, 10);
-                        const d = parseInt(document.getElementById('time-day').value, 10);
-                        const h = parseInt(document.getElementById('time-hour').value, 10);
-                        const mi= parseInt(document.getElementById('time-minute').value, 10);
-                        if ([y,m,d,h,mi].some(v => isNaN(v))) { alert('Invalid values'); return; }
-                        $gameSystem.chronus().setDay(y,m,d);
-                        $gameSystem.chronus().setTime(h,mi);
-                        // best-effort: also set Chronus plugin variables if plugin parameters mapped to real var IDs
-                        // Common Chronus parameter names (Japanese plugin): '年のゲーム変数','月のゲーム変数','日のゲーム変数','時のゲーム変数','分のゲーム変数','曜日IDのゲーム変数'
-                        try {
-                            const params = PluginManager.parameters && PluginManager.parameters('Chronus') ? PluginManager.parameters('Chronus') : {};
-                            const mapParamToVar = {
-                                yearKey: params['年のゲーム変数'] || 0,
-                                monthKey: params['月のゲーム変数'] || 0,
-                                dayKey: params['日のゲーム変数'] || 0,
-                                hourKey: params['時のゲーム変数'] || 0,
-                                minuteKey: params['分のゲーム変数'] || 0,
-                                weekdayKey: params['曜日IDのゲーム変数'] || 0
-                            };
-                            if (typeof $gameVariables !== 'undefined') {
-                                if (Number(mapParamToVar.yearKey)) $gameVariables.setValue(Number(mapParamToVar.yearKey), $gameSystem.chronus().getYear());
-                                if (Number(mapParamToVar.monthKey)) $gameVariables.setValue(Number(mapParamToVar.monthKey), $gameSystem.chronus().getMonth());
-                                if (Number(mapParamToVar.dayKey)) $gameVariables.setValue(Number(mapParamToVar.dayKey), $gameSystem.chronus().getDay());
-                                if (Number(mapParamToVar.hourKey)) $gameVariables.setValue(Number(mapParamToVar.hourKey), $gameSystem.chronus().getHour());
-                                if (Number(mapParamToVar.minuteKey)) $gameVariables.setValue(Number(mapParamToVar.minuteKey), $gameSystem.chronus().getMinute());
-                                if (Number(mapParamToVar.weekdayKey)) $gameVariables.setValue(Number(mapParamToVar.weekdayKey), $gameSystem.chronus().getWeekIndex());
-                            }
-                        } catch(e) { console.warn('Could not set Chronus vars', e); }
-                        alert('Chronus and variables (if present) updated.');
-                        refreshFields();
-                    } catch(e){
-                        console.error(e); alert('Failed: ' + (e && e.message ? e.message : e));
-                    }
-                });
-
-                // initial
-                refreshFields();
-            }
-
-            // ---------- Vars tab ----------
-            function renderVarsTab(container){
-                const wrapper = el('div');
-                if (!window.$dataSystem || !window.$gameVariables || !window.$gameSwitches) {
-                    wrapper.textContent = 'Game not loaded yet.';
-                    container.appendChild(wrapper);
-                    return;
-                }
-
-                // Variables dropdown
-                const varRow = el('div'); varRow.className = 'row';
-                varRow.innerHTML = `<label>Variable</label>
-                    <select id="cheat-var-select" style="width:220px"></select>
-                    <button class="btn small" id="cheat-var-refresh">Refresh</button>`;
-                wrapper.appendChild(varRow);
-
-                // var value editor
-                const varEdit = el('div'); varEdit.className = 'row';
-                varEdit.innerHTML = `<label>Value</label>
-                    <input type="number" id="cheat-var-value" value="0">
-                    <button class="btn small" id="cheat-var-set">Set</button>
-                    <button class="btn small" id="cheat-var-add">+1</button>`;
-                wrapper.appendChild(varEdit);
-
-                // Switches
-                const swRow = el('div'); swRow.className = 'row';
-                swRow.innerHTML = `<label>Switch</label>
-                    <select id="cheat-sw-select" style="width:220px"></select>
-                    <button class="btn small" id="cheat-sw-refresh">Refresh</button>`;
-                wrapper.appendChild(swRow);
-
-                const swEdit = el('div'); swEdit.className = 'row';
-                swEdit.innerHTML = `<label>Value</label>
-                    <select id="cheat-sw-value"><option value="1">ON</option><option value="0">OFF</option></select>
-                    <button class="btn small" id="cheat-sw-set">Set</button>`;
-                wrapper.appendChild(swEdit);
-
-                container.appendChild(wrapper);
-
-                function populateVarsAndSwitches(){
-                    const varSelect = document.getElementById('cheat-var-select');
-                    varSelect.innerHTML = '';
-                    const vars = $dataSystem && $dataSystem.variables ? $dataSystem.variables : [];
-                    for (let i = 1; i < vars.length; i++) {
-                        const name = vars[i] && vars[i].length ? vars[i] : `Var ${i}`;
-                        const opt = document.createElement('option');
-                        opt.value = i;
-                        opt.textContent = `${i} — ${name}`;
-                        varSelect.appendChild(opt);
-                    }
-
-                    const swSelect = document.getElementById('cheat-sw-select');
-                    swSelect.innerHTML = '';
-                    const sws = $dataSystem && $dataSystem.switches ? $dataSystem.switches : [];
-                    for (let i = 1; i < sws.length; i++) {
-                        const name = sws[i] && sws[i].length ? sws[i] : `Switch ${i}`;
-                        const opt = document.createElement('option');
-                        opt.value = i;
-                        opt.textContent = `${i} — ${name}`;
-                        swSelect.appendChild(opt);
-                    }
-                    updateVarPreview();
-                    updateSwPreview();
-                }
-
-                function updateVarPreview(){
-                    const sel = document.getElementById('cheat-var-select');
-                    const id = Number(sel.value) || 0;
-                    const cur = $gameVariables.value(id);
-                    document.getElementById('cheat-var-value').value = (typeof cur !== 'undefined' ? cur : '');
-                }
-                function updateSwPreview(){
-                    const sel = document.getElementById('cheat-sw-select');
-                    const id = Number(sel.value) || 0;
-                    const cur = $gameSwitches.value(id) ? 1 : 0;
-                    document.getElementById('cheat-sw-value').value = cur;
-                }
-
-                addActiveListener(document, function dummy(){});
-                wrapper.querySelector('#cheat-var-refresh').addEventListener('click', populateVarsAndSwitches);
-                wrapper.querySelector('#cheat-var-set').addEventListener('click', ()=>{
-                    const id = Number(document.getElementById('cheat-var-select').value);
-                    const v = parseInt(document.getElementById('cheat-var-value').value, 10);
-                    if (!isNaN(id) && !isNaN(v)) {
-                        $gameVariables.setValue(id, v);
-                        alert(`Var ${id} set to ${v}`);
-                    }
-                });
-                wrapper.querySelector('#cheat-var-add').addEventListener('click', ()=>{
-                    const id = Number(document.getElementById('cheat-var-select').value);
-                    const cur = Number($gameVariables.value(id) || 0);
-                    $gameVariables.setValue(id, cur + 1);
-                    updateVarPreview();
-                });
-
-                wrapper.querySelector('#cheat-sw-refresh').addEventListener('click', populateVarsAndSwitches);
-                wrapper.querySelector('#cheat-sw-set').addEventListener('click', ()=>{
-                    const id = Number(document.getElementById('cheat-sw-select').value);
-                    const v = Number(document.getElementById('cheat-sw-value').value) === 1;
-                    if (!isNaN(id)) {
-                        $gameSwitches.setValue(id, v);
-                        alert(`Switch ${id} set to ${v ? 'ON' : 'OFF'}`);
-                    }
-                });
-
-                wrapper.querySelector('#cheat-var-select').addEventListener('change', updateVarPreview);
-                wrapper.querySelector('#cheat-sw-select').addEventListener('change', updateSwPreview);
-
-                populateVarsAndSwitches();
-            }
-
-            // ---------- Settings tab ----------
-            function renderSettingsTab(container){
-                const w = el('div');
-                w.innerHTML =
-                    `<div class="row"><label>Auto-save</label>
-                       <select id="autosave-interval" style="width:120px">
-                         <option value="300000">5 min</option>
-                         <option value="600000">10 min</option>
-                         <option value="900000">15 min</option>
-                         <option value="1200000">20 min</option>
-                         <option value="1800000">30 min</option>
-                       </select>
-                       <label style="width:70px">Slot</label>
-                       <select id="autosave-slot" style="width:80px">
-                         <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-                         <option value="4">4</option><option value="5">5</option><option value="6">6</option>
-                       </select>
-                       <button class="btn small" id="autosave-toggle">Enable</button>
-                     </div>
-                     <div class="row">
-                       <button class="btn small" id="save-now">Save Now</button>
-                       <button class="btn small" id="load-now">Load Now</button>
-                       <select id="manual-slot" style="width:90px">
-                         <option value="1">slot 1</option><option value="2">slot 2</option><option value="3">slot 3</option>
-                         <option value="4">slot 4</option><option value="5">slot 5</option><option value="6">slot 6</option>
-                       </select>
-                     </div>
-                     <div class="row"><span id="settingsStatus" class="status">Auto-save: OFF</span></div>
-                     <div class="row"><button class="btn small" id="force-open-save-menu">Force open Save menu</button>
-                       <button class="btn small" id="force-open-load-menu">Force open Load menu</button>
-                     </div>
-                     <div class="sub">Auto-save is OFF by default (won't persist across reloads).</div>`;
-                container.appendChild(w);
-
-                const intSel = w.querySelector('#autosave-interval');
-                const slotSel = w.querySelector('#autosave-slot');
-                const toggleBtn = w.querySelector('#autosave-toggle');
-                const manualSlot = w.querySelector('#manual-slot');
-                const saveNowBtn = w.querySelector('#save-now');
-                const loadNowBtn = w.querySelector('#load-now');
-
-                intSel.value = String(autosaveIntervalMs);
-                slotSel.value = String(autosaveSlot);
-                renderSettingsStatus();
-
-                intSel.addEventListener('change', ()=> {
-                    autosaveIntervalMs = Number(intSel.value);
-                    if (autosaveEnabled) enableAutosave(true);
-                    renderSettingsStatus();
-                });
-                slotSel.addEventListener('change', ()=> {
-                    autosaveSlot = Number(slotSel.value);
-                    renderSettingsStatus();
-                });
-                toggleBtn.addEventListener('click', ()=> {
-                    enableAutosave(!autosaveEnabled);
-                    toggleBtn.textContent = autosaveEnabled ? 'Disable' : 'Enable';
-                });
-
-                saveNowBtn.addEventListener('click', ()=> {
-                    const s = Number(manualSlot.value) || 1;
-                    doSave(s, false);
-                });
-                loadNowBtn.addEventListener('click', ()=> {
-                    const s = Number(manualSlot.value) || 1;
-                    if (confirm('Load slot ' + s + '? Current progress will be replaced.')) doLoad(s);
-                });
-
-                w.querySelector('#force-open-save-menu').addEventListener('click', ()=> {
-                    try {
-                        if (window.SceneManager) SceneManager.push(Scene_Save);
-                        else alert('Scene_Save unavailable');
-                    } catch(e) { alert('Cannot open save menu: ' + e.message); }
-                });
-                w.querySelector('#force-open-load-menu').addEventListener('click', ()=> {
-                    try {
-                        if (window.SceneManager) SceneManager.push(Scene_Load);
-                        else alert('Scene_Load unavailable');
-                    } catch(e) { alert('Cannot open load menu: ' + e.message); }
-                });
-
-                renderSettingsStatus();
-            }
-
-            // ---------- ESC button logic (debounced) ----------
-            (function(){
-                const btn = document.getElementById('escButton');
-                let disabled = false;
-                function openMenuDirect(){
-                    try {
-                        if (window.SceneManager && SceneManager._scene) {
-                            const sc = SceneManager._scene;
-                            if (window.Scene_Map && sc instanceof Scene_Map) {
-                                if (window.$gamePlayer && $gamePlayer.canMove && $gamePlayer.canMove()) {
-                                    if (window.SoundManager && SoundManager.playOk) SoundManager.playOk();
-                                    if (window.Window_MenuCommand && Window_MenuCommand.initCommandPosition) Window_MenuCommand.initCommandPosition();
-                                    SceneManager.push(Scene_Menu);
-                                    return true;
-                                }
-                            }
-                            if (SceneManager._stack && SceneManager._stack.length > 1) {
-                                if (typeof SceneManager.pop === 'function') SceneManager.pop();
-                                else if (typeof SceneManager.goto === 'function') SceneManager.goto(Scene_Map);
-                                return true;
-                            }
-                        }
-                    } catch(e) {}
-                    return false;
-                }
-                function onEscPress(e){
-                    try { if (e && typeof e.preventDefault === 'function') e.preventDefault(); } catch(_) {}
-                    if (disabled) return;
-                    disabled = true;
-                    setTimeout(()=> disabled = false, 450);
-                    if (!openMenuDirect()) {
-                        try {
-                            const ev = new KeyboardEvent('keydown', {key:'Escape', code:'Escape', bubbles:true, cancelable:true});
-                            Object.defineProperty(ev, 'keyCode', {get: ()=>27});
-                            Object.defineProperty(ev, 'which',   {get: ()=>27});
-                            document.dispatchEvent(ev);
-                            window.dispatchEvent(ev);
-                            setTimeout(()=> {
-                                const ev2 = new KeyboardEvent('keyup', {key:'Escape', code:'Escape', bubbles:true, cancelable:true});
-                                Object.defineProperty(ev2, 'keyCode', {get: ()=>27});
-                                Object.defineProperty(ev2, 'which',   {get: ()=>27});
-                                document.dispatchEvent(ev2);
-                                window.dispatchEvent(ev2);
-                            }, 16);
-                        } catch(_) {}
-                    }
-                }
-                addActiveListener(btn, onEscPress);
-            })();
-
-            // expose for console
-            window.__doSave = doSave;
-            window.__doLoad = doLoad;
-            window.__renderCheat = function(tab){ showCheatTab(tab || 'money'); };
-
-            // start with autosave OFF and panel hidden
-            enableAutosave(false);
-
-            // close panel via tapping backdrop (mobile)
-            backdrop.addEventListener('click', closePanel);
-            backdrop.addEventListener('touchstart', function(e){ try { e.preventDefault(); } catch(_) {} closePanel(); }, {passive:false});
-
-            // End IIFE
-        })();
-        </script>
-    </body>
+      window.showCheatTab=showCheatTab;
+    })();
+    </script>
+  </body>
 </html>

@@ -159,6 +159,7 @@
         <button type="button" data-tab="money">Money</button>
         <button type="button" data-tab="items">Items</button>
         <button type="button" data-tab="actors">Actors</button>
+        <button type="button" data-tab="battle">Battle</button> <!-- NEW: Battle tab -->
         <button type="button" data-tab="time">Time</button>
         <button type="button" data-tab="vars">Vars</button>
         <button type="button" data-tab="settings">Settings</button>
@@ -282,6 +283,7 @@
           if (tab === 'money') return renderMoneyTab(content);
           if (tab === 'items') return renderItemsTab(content);
           if (tab === 'actors') return renderActorsTab(content);
+          if (tab === 'battle') return renderBattleTab(content); // new
           if (tab === 'time') return renderTimeTab(content);
           if (tab === 'vars') return renderVarsTab(content);
           if (tab === 'settings') return renderSettingsTab(content);
@@ -416,6 +418,180 @@
         }, {passive:false});
       }
 
+      /* ========= Battle tab (MTool functions) ========= */
+      // states
+      let cheat_instantWin = false;   // instant win button doesn't need persistent state but keep var for reference
+      let cheat_enemyIgnore = false;  // when true, player's touch-trigger action is suppressed
+      let cheat_passThrough = false;  // when true, player._through = true
+
+      // Keep original triggerTouchAction so we can restore when toggle off
+      const _orig_triggerTouchAction = (typeof Game_Player !== 'undefined' && Game_Player.prototype && Game_Player.prototype.triggerTouchAction) ? Game_Player.prototype.triggerTouchAction : null;
+
+      function applyEnemyIgnoreWrap(){
+        if(!window.Game_Player || !_orig_triggerTouchAction) return;
+        // If we already wrapped, avoid wrapping twice
+        if(Game_Player.prototype.triggerTouchAction && Game_Player.prototype.triggerTouchAction.__isCheatWrap) return;
+        Game_Player.prototype.triggerTouchAction = function() {
+          if(window.__cheat_enemyIgnore) {
+            // do nothing (ignore touch-trigger events)
+            return;
+          }
+          // call original
+          return _orig_triggerTouchAction.apply(this, arguments);
+        };
+        Game_Player.prototype.triggerTouchAction.__isCheatWrap = true;
+      }
+
+      function removeEnemyIgnoreWrap(){
+        if(!window.Game_Player || !_orig_triggerTouchAction) return;
+        // Restore original if we wrapped
+        if(Game_Player.prototype.triggerTouchAction && Game_Player.prototype.triggerTouchAction.__isCheatWrap) {
+          Game_Player.prototype.triggerTouchAction = _orig_triggerTouchAction;
+        }
+      }
+
+      // keep a helper to set player _through state (if player exists)
+      function applyPassThroughToPlayer(){
+        try {
+          if(window.$gamePlayer) {
+            $gamePlayer._through = !!window.__cheat_passThrough;
+          }
+        } catch(e){}
+      }
+
+      // Ensure cheats applied on map load (so toggles persist across maps)
+      (function(){
+        if(window.Scene_Map && Scene_Map.prototype && !Scene_Map.prototype.__cheatOnMapLoaded) {
+          const __orig_onMapLoaded = Scene_Map.prototype.onMapLoaded;
+          Scene_Map.prototype.onMapLoaded = function() {
+            __orig_onMapLoaded.apply(this, arguments);
+            // reapply pass-through
+            applyPassThroughToPlayer();
+            // reapply enemy-ignore wrapping if enabled
+            if(window.__cheat_enemyIgnore) applyEnemyIgnoreWrap();
+          };
+          Scene_Map.prototype.onMapLoaded.__cheatOnMapLoaded = true;
+        }
+      })();
+
+      function renderBattleTab(container){
+        const wrapper = el('div');
+        if(!window.BattleManager && !window.$gameParty && !window.$gameTroop) {
+          // It's okay if not in battle; we still show controls
+        }
+
+        wrapper.appendChild(el('div','<div class="sub">MTool-like battle controls: Instant Win (in-battle)</div>'));
+
+        // Instant win
+        const winRow = el('div');
+        winRow.className = 'row';
+        winRow.innerHTML = `<button class="btn small" id="cheat-instant-win">Instant Win (kill all enemies)</button>`;
+        wrapper.appendChild(winRow);
+
+        // Enemy Ignore toggle
+        const ignoreRow = el('div');
+        ignoreRow.className = 'row';
+        ignoreRow.innerHTML = `<label>Enemy Ignore</label>
+                               <button class="btn small" id="cheat-enemy-ignore-toggle">OFF</button>
+                               <div class="sub">When ON, player touch triggers are suppressed (common 'player touch' enemy events won't start).</div>`;
+        wrapper.appendChild(ignoreRow);
+
+        // Pass Through toggle
+        const passRow = el('div');
+        passRow.className = 'row';
+        passRow.innerHTML = `<label>Pass Through</label>
+                             <button class="btn small" id="cheat-pass-toggle">OFF</button>
+                             <div class="sub">When ON, the player can walk through obstacles (sets $gamePlayer._through = true).</div>`;
+        wrapper.appendChild(passRow);
+
+        container.appendChild(wrapper);
+
+        // handlers
+        wrapper.querySelector('#cheat-instant-win').addEventListener('pointerdown', (ev)=>{ ev.preventDefault && ev.preventDefault();
+          try {
+            // if in battle
+            let inBattle = false;
+            if(window.$gameParty && typeof $gameParty.inBattle === 'function') inBattle = $gameParty.inBattle();
+            if(window.BattleManager && typeof BattleManager.isBattleTest === 'function') {
+              // not reliable as general test, but we use $gameParty.inBattle if available
+            }
+            if(!inBattle && window.SceneManager && SceneManager._scene && window.Scene_Battle && SceneManager._scene instanceof Scene_Battle) {
+              inBattle = true;
+            }
+            if(!inBattle) {
+              alert('Not in battle.');
+              return;
+            }
+            // try to set all troop members' HP to 0
+            if(window.$gameTroop && typeof $gameTroop.members === 'function') {
+              $gameTroop.members().forEach(function(enemy){
+                try {
+                  if(typeof enemy.setHp === 'function') {
+                    enemy.setHp(0);
+                  } else if(typeof enemy.changeHp === 'function') {
+                    enemy.changeHp(-enemy.hp);
+                  } else if(typeof enemy.hp !== 'undefined') {
+                    enemy.hp = 0;
+                  }
+                } catch(e){}
+              });
+            }
+            // attempt to end battle (best-effort)
+            if(window.BattleManager && typeof BattleManager.endBattle === 'function') {
+              try { BattleManager.endBattle(0); } catch(e) {}
+            }
+            // fallback: try to call Scene_Battle.prototype.updateForceVictory or similar - not standard; we keep simple
+            alert('Tried to instant-win the battle (best-effort).');
+          } catch(e){
+            console.error(e);
+            alert('Instant win failed: ' + (e && e.message ? e.message : e));
+          }
+        }, {passive:false});
+
+        const enemyBtn = wrapper.querySelector('#cheat-enemy-ignore-toggle');
+        enemyBtn.addEventListener('pointerdown', (ev)=>{ ev.preventDefault && ev.preventDefault();
+          window.__cheat_enemyIgnore = !window.__cheat_enemyIgnore;
+          cheat_enemyIgnore = window.__cheat_enemyIgnore;
+          if(cheat_enemyIgnore){
+            // apply wrapper
+            try { applyEnemyIgnoreWrap(); } catch(e){ console.warn(e); }
+            enemyBtn.textContent = 'ON';
+            enemyBtn.classList.add('ok');
+          } else {
+            // restore original behavior
+            try { removeEnemyIgnoreWrap(); } catch(e){ console.warn(e); }
+            enemyBtn.textContent = 'OFF';
+            enemyBtn.classList.remove('ok');
+          }
+        }, {passive:false});
+
+        const passBtn = wrapper.querySelector('#cheat-pass-toggle');
+        passBtn.addEventListener('pointerdown', (ev)=>{ ev.preventDefault && ev.preventDefault();
+          window.__cheat_passThrough = !window.__cheat_passThrough;
+          cheat_passThrough = window.__cheat_passThrough;
+          applyPassThroughToPlayer();
+          if(cheat_passThrough){
+            passBtn.textContent = 'ON';
+            passBtn.classList.add('ok');
+          } else {
+            passBtn.textContent = 'OFF';
+            passBtn.classList.remove('ok');
+          }
+        }, {passive:false});
+
+        // Ensure initial text reflects current toggles
+        (function refreshBattleUI(){
+          if(window.__cheat_enemyIgnore){
+            enemyBtn.textContent = 'ON'; enemyBtn.classList.add('ok');
+            try { applyEnemyIgnoreWrap(); } catch(e){}
+          } else { enemyBtn.textContent = 'OFF'; enemyBtn.classList.remove('ok'); }
+          if(window.__cheat_passThrough){
+            passBtn.textContent = 'ON'; passBtn.classList.add('ok');
+            try { applyPassThroughToPlayer(); } catch(e){}
+          } else { passBtn.textContent = 'OFF'; passBtn.classList.remove('ok'); }
+        })();
+      }
+
       /* ========= Time tab (Chronus) ========= */
       // We'll call Chronus API directly: $gameSystem.chronus().setDay() and setTime()
       // Default Chronus variable IDs you previously used (best-effort).
@@ -476,20 +652,16 @@
           const mi = parseInt(document.getElementById('time-minute').value,10);
           if([m,d,h,mi].some(x=>isNaN(x))){ alert('Invalid values'); return; }
           try{
-            // We will call setDay(year, month, day). Many games don't use year; use current chronus year if available.
             const chronus = $gameSystem.chronus();
-            let year = chronus.getYear ? chronus.getYear() : 1;
-            // If your game doesn't use year, setDay still expects year; we use existing year value.
+            let year = (chronus.getYear && typeof chronus.getYear === 'function') ? chronus.getYear() : 1;
             chronus.setDay(year, m, d);
             chronus.setTime(h, mi);
-            // Chronus.demandRefresh will run inside setDay/setTime - in-game scene should reflect change immediately.
             refreshFields();
             alert('Chronus time set.');
           } catch(e){ console.error(e); alert('Failed to set Chronus time: '+(e && e.message ? e.message : e)); }
         }, {passive:false});
 
         wrapper.querySelector('#time-set-vars').addEventListener('pointerdown', (ev)=>{ ev.preventDefault && ev.preventDefault();
-          // set Chronus and also update common Chronus-related variables (best-effort)
           if(!window.$gameSystem || !window.$gameSystem.chronus){ alert('Chronus not available'); return; }
           const m = parseInt(document.getElementById('time-month').value,10);
           const d = parseInt(document.getElementById('time-day').value,10);
@@ -498,10 +670,9 @@
           if([m,d,h,mi].some(x=>isNaN(x))){ alert('Invalid values'); return; }
           try{
             const chronus = $gameSystem.chronus();
-            let year = chronus.getYear ? chronus.getYear() : 1;
+            let year = (chronus.getYear && typeof chronus.getYear === 'function') ? chronus.getYear() : 1;
             chronus.setDay(year, m, d);
             chronus.setTime(h, mi);
-            // Try to set chronus plugin variables using plugin parameters if present
             try {
               const params = PluginManager && PluginManager.parameters ? PluginManager.parameters('Chronus') : {};
               const yearVar = Number(params && params['年のゲーム変数'] || 0) || 0;
@@ -518,7 +689,7 @@
                 if(hourVar) $gameVariables.setValue(hourVar, chronus.getHour());
                 if(minVar) $gameVariables.setValue(minVar, chronus.getMinute());
               }
-            } catch(_e) { /* ignore plugin param read errors */ }
+            } catch(_e) { /* ignore */ }
             refreshFields();
             alert('Chronus and variables set.');
           } catch(e){ console.error(e); alert('Failed: '+(e && e.message ? e.message : e)); }

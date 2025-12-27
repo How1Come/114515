@@ -379,6 +379,9 @@
         searchRow.className = 'row';
         searchRow.innerHTML = `<label>Search</label><input type="text" id="cheat-items-search" placeholder="Filter by name..." style="width:200px"><button class="btn small" id="cheat-items-clear">Clear</button>`;
         wrapper.appendChild(searchRow);
+        // reference inputs from the newly created searchRow (safe even before appending wrapper to document)
+        const searchInput = searchRow.querySelector('#cheat-items-search');
+        const clearBtn = searchRow.querySelector('#cheat-items-clear');
 
         function highlightText(name, q){
           q = (q || '').toString();
@@ -400,7 +403,7 @@
           row.className = 'row';
           const inputId = `cheat-${type}-${id}`;
           const count = ($gameParty.numItems ? $gameParty.numItems(obj) : 0) || 0;
-          const q = (document.getElementById('cheat-items-search') || {value:''}).value.trim();
+          const q = ((searchInput && searchInput.value) || '').trim();
           const labelHtml = highlightText(obj.name || (type+' '+id), q);
           row.innerHTML =
             `<label style="width:160px">${labelHtml}</label>` +
@@ -438,7 +441,7 @@
         }
 
         function getFiltered(list){
-          const q = (document.getElementById('cheat-items-search').value || '').trim().toLowerCase();
+          const q = ((searchInput && searchInput.value) || '').trim().toLowerCase();
           if(!q) return list;
           return list.filter(o => (o.name || '').toString().toLowerCase().includes(q));
         }
@@ -457,13 +460,11 @@
         renderLists();
 
         // search handlers
-        const searchInput = searchRow.querySelector('#cheat-items-search');
-        const clearBtn = searchRow.querySelector('#cheat-items-clear');
-        searchInput.addEventListener('input', (e)=>{ renderLists(); });
-        clearBtn.addEventListener('pointerdown', (e)=>{ e.preventDefault && e.preventDefault(); searchInput.value = ''; renderLists(); }, {passive:false});
+        searchInput && searchInput.addEventListener('input', (e)=>{ renderLists(); });
+        clearBtn && clearBtn.addEventListener('pointerdown', (e)=>{ e.preventDefault && e.preventDefault(); if(searchInput) searchInput.value = ''; renderLists(); }, {passive:false});
 
         // autofocus when tab opens
-        setTimeout(()=>{ try{ searchInput.focus(); searchInput.select(); } catch(e){} }, 0);
+        setTimeout(()=>{ try{ if(searchInput) { searchInput.focus(); searchInput.select(); } } catch(e){} }, 0);
 
         container.appendChild(wrapper);
 

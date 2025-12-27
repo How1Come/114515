@@ -127,6 +127,13 @@
       .danger { color:#f88; }
       .ok { color:#8f8; }
 
+      /* Category collapse and highlight */
+      .cheat-category-header { display:flex; align-items:center; gap:8px; cursor:pointer; margin-top:8px; font-weight:700; user-select:none; }
+      .cheat-category-toggle { width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center; border-radius:4px; background:#2a2a2a; border:1px solid #444; color:#fff; font-size:12px; }
+      .cheat-category-body { margin-top:6px; }
+      .cheat-category.collapsed .cheat-category-body { display:none; }
+      .cheat-highlight { background: rgba(255,255,0,0.25); padding:0 2px; border-radius:2px; }
+
       /* ensure overlays only handle their pointer area */
       canvas, body { touch-action: manipulation; -webkit-user-select: none; user-select: none; }
     </style>
@@ -337,37 +344,151 @@
       /* ========= Items ========= */
       function renderItemsTab(container){
         const wrapper = el('div');
-        if(!window.$dataItems || !window.$gameParty) {
+        if((!window.$dataItems && !window.$dataWeapons && !window.$dataArmors) || !window.$gameParty) {
           wrapper.textContent = 'Game not loaded yet.';
           container.appendChild(wrapper);
           return;
         }
-        // list items
-        window.$dataItems.forEach(item=>{
-          if(!item) return;
+
+        // categorize
+        const weapons = [];
+        const armors = [];
+        const clothes = [];
+        const props = [];
+        const others = [];
+
+        if(window.$dataWeapons){
+          window.$dataWeapons.forEach(w=>{ if(!w) return; weapons.push(w); });
+        }
+        if(window.$dataArmors){
+          window.$dataArmors.forEach(a=>{ if(!a) return; if(a.note && /<Cloth/i.test(a.note)) clothes.push(a); else armors.push(a); });
+        }
+        if(window.$dataItems){
+          window.$dataItems.forEach(i=>{
+            if(!i) return;
+            // classify key items / special by itypeId (2) or occasion 3 as Props
+            if(i.itypeId && i.itypeId !== 1) return props.push(i);
+            if(i.occasion === 3) return props.push(i);
+            // otherwise treat as 'others'
+            others.push(i);
+          });
+        }
+
+        // search UI
+        const searchRow = el('div');
+        searchRow.className = 'row';
+        searchRow.innerHTML = `<label>Search</label><input type="text" id="cheat-items-search" placeholder="Filter by name..." style="width:200px"><button class="btn small" id="cheat-items-clear">Clear</button>`;
+        wrapper.appendChild(searchRow);
+
+        function highlightText(name, q){
+          q = (q || '').toString();
+          if(!q) return escapeHtml(name || '');
+          const n = (name || '').toString();
+          const li = n.toLowerCase();
+          const qi = q.toLowerCase();
+          const idx = li.indexOf(qi);
+          if(idx === -1) return escapeHtml(n);
+          const before = escapeHtml(n.slice(0, idx));
+          const match = escapeHtml(n.slice(idx, idx + qi.length));
+          const after = escapeHtml(n.slice(idx + qi.length));
+          return `${before}<span class="cheat-highlight">${match}</span>${after}`;
+        }
+
+        function makeRow(obj, type){
+          const id = obj.id;
           const row = el('div');
           row.className = 'row';
+          const inputId = `cheat-${type}-${id}`;
+          const count = ($gameParty.numItems ? $gameParty.numItems(obj) : 0) || 0;
+          const q = (document.getElementById('cheat-items-search') || {value:''}).value.trim();
+          const labelHtml = highlightText(obj.name || (type+' '+id), q);
           row.innerHTML =
-            `<label style="width:160px">${escapeHtml(item.name || ('Item '+item.id))}</label>
-             <input type="number" id="cheat-item-${item.id}" value="${$gameParty.numItems ? $gameParty.numItems(item) : 0}" min="0">
-             <button class="btn small" data-id="${item.id}">Set</button>`;
-          wrapper.appendChild(row);
-        });
+            `<label style="width:160px">${labelHtml}</label>` +
+            `<input type="number" id="${inputId}" value="${count}" min="0">` +
+            `<button class="btn small" data-type="${type}" data-id="${id}">Set</button>`;
+          return row;
+        }
+
+        function renderCategory(title, list, type){
+          if(!list || list.length === 0) return;
+          const cat = el('div');
+          cat.className = 'cheat-category';
+          const header = el('div');
+          header.className = 'cheat-category-header';
+          const toggle = el('div', '−');
+          toggle.className = 'cheat-category-toggle';
+          const titleEl = el('div');
+          titleEl.textContent = `${title} (${list.length})`;
+          header.appendChild(toggle);
+          header.appendChild(titleEl);
+          cat.appendChild(header);
+
+          const body = el('div');
+          body.className = 'cheat-category-body';
+          list.forEach(obj=> body.appendChild(makeRow(obj, type)));
+          cat.appendChild(body);
+
+          // toggle behavior
+          header.addEventListener('pointerdown', (e)=>{ e.preventDefault && e.preventDefault();
+            const collapsed = cat.classList.toggle('collapsed');
+            toggle.textContent = collapsed ? '+' : '−';
+          }, {passive:false});
+
+          wrapper.appendChild(cat);
+        }
+
+        function getFiltered(list){
+          const q = (document.getElementById('cheat-items-search').value || '').trim().toLowerCase();
+          if(!q) return list;
+          return list.filter(o => (o.name || '').toString().toLowerCase().includes(q));
+        }
+
+        function renderLists(){
+          // remove everything after the search row
+          while(wrapper.children.length > 1) wrapper.removeChild(wrapper.lastChild);
+          renderCategory('Weapons', getFiltered(weapons), 'weapon');
+          renderCategory('Armors', getFiltered(armors), 'armor');
+          renderCategory('Clothes', getFiltered(clothes), 'cloth');
+          renderCategory('Props', getFiltered(props), 'item');
+          renderCategory('Others', getFiltered(others), 'item');
+        }
+
+        // initial render
+        renderLists();
+
+        // search handlers
+        const searchInput = searchRow.querySelector('#cheat-items-search');
+        const clearBtn = searchRow.querySelector('#cheat-items-clear');
+        searchInput.addEventListener('input', (e)=>{ renderLists(); });
+        clearBtn.addEventListener('pointerdown', (e)=>{ e.preventDefault && e.preventDefault(); searchInput.value = ''; renderLists(); }, {passive:false});
+
+        // autofocus when tab opens
+        setTimeout(()=>{ try{ searchInput.focus(); searchInput.select(); } catch(e){} }, 0);
+
         container.appendChild(wrapper);
 
-        // delegation - pointerdown
+        // delegated handler - pointerdown
         wrapper.addEventListener('pointerdown', (ev)=>{
           const b = ev.target.closest('button[data-id]');
           if(!b) return;
           ev.preventDefault && ev.preventDefault();
           const id = Number(b.dataset.id);
-          const input = document.getElementById('cheat-item-'+id);
+          const type = b.dataset.type;
+          let obj = null;
+          if(type === 'weapon') obj = $dataWeapons ? $dataWeapons[id] : null;
+          else if(type === 'armor') obj = $dataArmors ? $dataArmors[id] : null;
+          else if(type === 'cloth') obj = $dataArmors ? $dataArmors[id] : null;
+          else obj = $dataItems ? $dataItems[id] : null;
+
+          if(!obj) return alert('Item not found: '+id);
+
+          const input = document.getElementById(`cheat-${type}-${id}`);
+          if(!input) return;
           const v = parseInt(input.value,10);
           if(isNaN(v)) return;
-          const item = $dataItems[id];
-          const cur = $gameParty.numItems(item);
-          $gameParty.gainItem(item, v - cur);
-          alert('Item '+(item.name||id)+' set to '+v);
+          const cur = $gameParty.numItems ? $gameParty.numItems(obj) : 0;
+          $gameParty.gainItem(obj, v - cur);
+          alert((obj.name||id)+' set to '+v);
         }, {passive:false});
       }
 
